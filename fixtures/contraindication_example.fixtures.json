@@ -1,0 +1,26 @@
+[
+  {
+    "name": "PLACEHOLDER positive",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": true,
+      "proposed_atc": "J01XX01",
+      "proposed_tablets": 2
+    },
+    "expect": [
+      "drugx-pregnancy"
+    ]
+  },
+  {
+    "name": "PLACEHOLDER negative",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": false,
+      "proposed_atc": "J01XX01",
+      "proposed_tablets": 2
+    },
+    "expect": []
+  }
+]

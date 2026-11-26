@@ -1,0 +1,26 @@
+[
+  {
+    "name": "PLACEHOLDER positive",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": false,
+      "proposed_atc": "P01BF01",
+      "proposed_tablets": 2
+    },
+    "expect": [
+      "al-dose-weight-band"
+    ]
+  },
+  {
+    "name": "PLACEHOLDER negative",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": false,
+      "proposed_atc": "P01BF01",
+      "proposed_tablets": 1
+    },
+    "expect": []
+  }
+]
