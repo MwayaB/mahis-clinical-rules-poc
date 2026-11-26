@@ -45,11 +45,11 @@ async function nodeCard(entry) {
  box.append(el('div',{class:'section-heading'},el('h2',{},`${n.type==='table'?'Weight table':'Pregnancy predicate'} · ${entry.block.id}`),el('span',{class:'badge'},`${n.status} · ${entry.approvals.length} of 2 approvals`)));
  if(n.parse_errors?.length) right.append(el('div',{class:'parse-errors'},el('strong',{},'Parse errors'),el('ul',{},n.parse_errors.map(e=>el('li',{},e)))));
  const edit=el('form',{method:'post',action:`/api/ir/${n.id}/edit`,'aria-label':'Edit '+entry.block.id}),atc=input(n.id+'-atc','ATC code (required)',n.applies_to.atc,'text',{required:true}),message=field(n.id+'-message','Placeholder advice message',el('textarea',{rows:3,required:true},n.message_template??n.message));
- const applicable=el('fieldset',{},el('legend',{},'Applicability · checked before conditions'));
+ const applicable=el('fieldset',{},el('legend',{},'Rule applicability · checked before conditions'));
  const sex=selectField(n.id+'-sex','Patient sex',[['','Any'],['F','Female'],['M','Male'],['U','Unknown / unspecified']],n.applies_to.sex??'');
  const minAge=input(n.id+'-age-min','Minimum age (years, inclusive)',n.applies_to.age_years?.min??'','number',{min:0,max:120,step:'any'}),maxAge=input(n.id+'-age-max','Maximum age (years, inclusive)',n.applies_to.age_years?.max??'','number',{min:0,max:120,step:'any'});
  const indication=input(n.id+'-icd10','ICD-10 indication prefix (optional)',n.applies_to.icd10??'');
- applicable.append(atc,sex,minAge,maxAge,indication);edit.append(applicable,el('p',{class:'muted'},'Sex, age and indication belong in Applicability. Conditions accept pregnant, weight_kg, proposed_atc, proposed_tablets and today.'));
+ applicable.append(atc,sex,minAge,maxAge,indication,el('p',{class:'muted'},'Applicability is read from explicit guideline text and must be checked against the source during review. The EMR automatically selects approved rules using patient data.'));edit.append(applicable,el('p',{class:'muted'},'Sex, age and indication belong in Applicability. Conditions accept pregnant, weight_kg, proposed_atc, proposed_tablets and today.'));
  const structured=n.type==='table'?bandEditor(n):whenEditor(n);edit.append(structured.view);
  let severity;if(n.type==='predicate') {severity=selectField(n.id+'-severity','Severity',[['block','Block'],['warn','Warning'],['info','Information']],n.severity);edit.append(severity);}
  edit.append(message,el('button',{type:'submit'},'Save edit'));

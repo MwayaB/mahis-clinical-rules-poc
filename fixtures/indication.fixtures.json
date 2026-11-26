@@ -1,0 +1,92 @@
+[
+  {
+    "name": "malaria correct",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": false,
+      "proposed_atc": "P01BF01",
+      "proposed_tablets": 1,
+      "active_diagnoses": [
+        {
+          "icd10": "B50.9",
+          "certainty": "confirmed",
+          "terminology_version": "seed-placeholder-2026"
+        }
+      ]
+    },
+    "expect": []
+  },
+  {
+    "name": "malaria wrong",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": false,
+      "proposed_atc": "P01BF01",
+      "proposed_tablets": 2,
+      "active_diagnoses": [
+        {
+          "icd10": "B50.9",
+          "certainty": "confirmed",
+          "terminology_version": "seed-placeholder-2026"
+        }
+      ]
+    },
+    "expect": [
+      "al-dose-weight-band"
+    ]
+  },
+  {
+    "name": "pneumonia does not match malaria",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": false,
+      "proposed_atc": "P01BF01",
+      "proposed_tablets": 2,
+      "active_diagnoses": [
+        {
+          "icd10": "J18.9",
+          "certainty": "confirmed",
+          "terminology_version": "seed-placeholder-2026"
+        }
+      ]
+    },
+    "expect": []
+  },
+  {
+    "name": "ruled-out malaria warns no indication",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": false,
+      "proposed_atc": "P01BF01",
+      "proposed_tablets": 2,
+      "active_diagnoses": [
+        {
+          "icd10": "B50.9",
+          "certainty": "ruled-out",
+          "terminology_version": "seed-placeholder-2026"
+        }
+      ]
+    },
+    "expect": [
+      "al-dose-weight-band"
+    ]
+  },
+  {
+    "name": "no diagnosis warns no indication",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": false,
+      "proposed_atc": "P01BF01",
+      "proposed_tablets": 2,
+      "active_diagnoses": []
+    },
+    "expect": [
+      "al-dose-weight-band"
+    ]
+  }
+]

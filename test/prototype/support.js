@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { mkdtempSync,rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -27,10 +28,16 @@ export async function releasedHTTP(s) {
  await s.ok(`/api/guidelines/${upload.sha256}/metadata`,{edition:'placeholder-2026'});
  const digitisation=await s.ok(`/api/guidelines/${upload.sha256}/digitise`,{});
  const drafts=await s.ok(`/api/guidelines/${upload.sha256}/draft`,{atc_by_block:{b1:'P01BF01',b2:'J01XX01'}});
- for(const {node:n} of drafts.nodes) {
+ for(const entry of drafts.nodes) {
+  const n=entry.node;
+  // Generic HTTP test fixture text has no indication; add explicit synthetic scope for these tests only.
+  if(!n.applies_to.icd10&&n.type==='table') entry.node=(await s.ok(`/api/ir/${n.id}/edit`,{applies_to:{...n.applies_to,icd10:'B50'}})).node;
+  if(n.type==='predicate'&&!n.applies_to.age_years) entry.node=(await s.ok(`/api/ir/${n.id}/edit`,{applies_to:{...n.applies_to,sex:'F',age_years:{min:12,max:50}}})).node;
   await s.ok(`/api/ir/${n.id}/approve`,{reviewer:'placeholder-reviewer-a'});await s.ok(`/api/ir/${n.id}/approve`,{reviewer:'placeholder-reviewer-b'});
-  const ctx={active_diagnoses:[{icd10:'B50.9',certainty:'confirmed',terminology_version:'seed-placeholder-2026'}],sex:'F',age_years:30,today:'2026-01-01',weight_kg:12,pregnant:n.type==='predicate',proposed_atc:n.applies_to.atc,proposed_tablets:2};
-  await s.ok('/api/fixtures',{node_id:n.id,entries:[{name:'PLACEHOLDER positive',ctx,expect:[n.id]},{name:'PLACEHOLDER negative',ctx:{...ctx,...(n.type==='table'?{proposed_tablets:1}:{pregnant:false})},expect:[]}]});
+  const scoped=entry.node,term=(await import('../../src/terminology.js')).defaultTerminology,code=term.codes.find(c=>c.code.startsWith(scoped.applies_to.icd10??''))?.code;
+  const correct=n.type==='table'?n.bands.find(b=>b.min<=12&&b.max>12).value:1;
+  const ctx={active_diagnoses:[{icd10:code,certainty:'confirmed',terminology_version:term.terminology_version}],sex:'F',age_years:30,today:'2026-01-01',weight_kg:12,pregnant:n.type==='predicate',proposed_atc:n.applies_to.atc,proposed_tablets:n.type==='table'?correct+1:2};
+  await s.ok('/api/fixtures',{node_id:n.id,entries:[{name:'PLACEHOLDER positive',ctx,expect:[n.id]},{name:'PLACEHOLDER negative',ctx:{...ctx,...(n.type==='table'?{proposed_tablets:correct}:{pregnant:false})},expect:[]}]});
  }
  const release=await s.ok('/api/releases',{document_sha256:upload.sha256,version:'poc-demo-0.1.0'});return {upload,digitisation,drafts,release};
 }

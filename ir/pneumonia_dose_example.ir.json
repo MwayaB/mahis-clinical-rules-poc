@@ -1,0 +1,53 @@
+{
+  "ir_version": "0.1",
+  "document": {
+    "id": "EXAMPLE-PNEUMONIA-DOSE",
+    "edition": "placeholder-2026",
+    "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "nodes": [
+    {
+      "risk": "high",
+      "status": "approved",
+      "placeholder": true,
+      "reviewers": [
+        "placeholder-reviewer-a",
+        "placeholder-reviewer-b"
+      ],
+      "source": {
+        "page": 1,
+        "bbox": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "text": "PLACEHOLDER pneumonia (ICD-10 J18), confirmed or presumptive. ATC P01BF01: 5 to <35 kg, 2 tablets. Not clinical guidance."
+      },
+      "id": "pneumonia-dose-weight-band",
+      "type": "table",
+      "applies_to": {
+        "atc": "P01BF01",
+        "icd10": "J18"
+      },
+      "input": "weight_kg",
+      "coverage": {
+        "min": 5,
+        "max": 35
+      },
+      "bands": [
+        {
+          "min": 5,
+          "max": 35,
+          "min_inclusive": true,
+          "max_inclusive": false,
+          "value": 2,
+          "unit": "tablet"
+        }
+      ],
+      "on_missing_input": "warn",
+      "on_no_band": "warn",
+      "message_template": "PLACEHOLDER: At {input_value} kg the guideline dose is {value} {unit}; {observed} recorded."
+    }
+  ]
+}

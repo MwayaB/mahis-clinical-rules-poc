@@ -7,6 +7,7 @@ import { compile } from '../src/compiler.js';
 import { openEventLog } from '../src/events.js';
 import { register,observe,diagnose,status,prescribe } from '../src/workflow.js';
 const read=path=>JSON.parse(readFileSync(new URL(path,import.meta.url)));
+const sample=read('../samples/dose-guide/bundle.json');
 const dose=read('../ir/dose_band_example.ir.json'),pregnancy=read('../ir/contraindication_example.ir.json');
 const root=mkdtempSync(join(tmpdir(),'placeholder-demo-')),keys=generateKeyPairSync('ed25519');
 const publicPath=join(root,'public.pem');writeFileSync(publicPath,keys.publicKey.export({type:'spki',format:'pem'}));
@@ -19,7 +20,7 @@ try {
  observe({...args('child'),field:'weight_kg',value:15});
  const atc=dose.nodes[0].applies_to.atc;
  assert.match(check('child',atc,1,'Child age 4, weight 15 kg, no diagnosis').result.advice[0].message,/no indication recorded/);
- diagnose({...args('child'),icd10:'B50.9',label:'PLACEHOLDER malaria',certainty:'confirmed'});
+ diagnose({...args('child'),...sample.demo_diagnoses.child});
  assert.equal(check('child',atc,1,'Child with confirmed malaria: wrong dose').result.advice[0].severity,'warn');
  assert.deepEqual(check('child',atc,2,'Child with confirmed malaria: correct placeholder dose').result.advice,[]);
  register({...args('adult'),name:'PLACEHOLDER adult pregnancy example',sex:'F',age_years:30});

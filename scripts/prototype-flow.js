@@ -25,13 +25,13 @@ if(existing) {assert.equal(existing.document_sha256,sample.document_sha256);cons
 const p=call('/api/patients',{name:'PLACEHOLDER child',sex:'M',age_years:4}),patient='/api/patients/'+p.patient_id;
 call(patient+'/observations',{field:'weight_kg',value:15});
 const missing=call(patient+'/prescriptions/check',{atc:sample.atc_by_block.b1,tablets:1,release_version:version});assert.match(missing.result.advice[0].message,/no indication recorded/);
-call(patient+'/diagnoses',{icd10:'B50.9',label:'PLACEHOLDER malaria',certainty:'confirmed'});
+call(patient+'/diagnoses',sample.demo_diagnoses.child);
 const first=call(patient+'/prescriptions/check',{atc:sample.atc_by_block.b1,tablets:1,release_version:version});assert.equal(first.result.advice.length,1);assert.equal(first.result.advice[0].severity,'warn');
 call(patient+'/observations',{field:'weight_kg',value:15});
 const second=call(patient+'/prescriptions/check',{atc:sample.atc_by_block.b1,tablets:2,release_version:version});assert.deepEqual(second.result.advice,[]);
 assert.equal(call(`/api/events/${first.shown.seq}/replay`,{}).matches,true);
 const adult=call('/api/patients',{name:'PLACEHOLDER adult pregnancy example',sex:'F',age_years:30}),adultPath='/api/patients/'+adult.patient_id;
-call(adultPath+'/diagnoses',{icd10:'Z34.9',label:'PLACEHOLDER coded adult-demo diagnosis',certainty:'confirmed'});
+call(adultPath+'/diagnoses',sample.demo_diagnoses.adult);
 call(adultPath+'/status',{field:'pregnant',value:true});const blocked=call(adultPath+'/prescriptions/check',{atc:sample.atc_by_block.b2,tablets:1,release_version:version});assert.equal(blocked.result.advice[0].severity,'block');assert.equal(blocked.exitCode,2);
 const events=call(patient+'/events');assert.equal(events.filter(e=>e.type==='prescription-drafted').length,3);
 assert.ok(!events.some(e=>e.type==='status-recorded'&&e.payload.field==='pregnant'));

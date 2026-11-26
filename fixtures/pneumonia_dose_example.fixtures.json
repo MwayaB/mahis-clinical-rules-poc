@@ -1,0 +1,40 @@
+[
+  {
+    "name": "pneumonia correct",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": false,
+      "proposed_atc": "P01BF01",
+      "proposed_tablets": 2,
+      "active_diagnoses": [
+        {
+          "icd10": "J18.9",
+          "certainty": "confirmed",
+          "terminology_version": "seed-placeholder-2026"
+        }
+      ]
+    },
+    "expect": []
+  },
+  {
+    "name": "pneumonia wrong",
+    "ctx": {
+      "today": "2026-01-01",
+      "weight_kg": 12,
+      "pregnant": false,
+      "proposed_atc": "P01BF01",
+      "proposed_tablets": 1,
+      "active_diagnoses": [
+        {
+          "icd10": "J18.9",
+          "certainty": "confirmed",
+          "terminology_version": "seed-placeholder-2026"
+        }
+      ]
+    },
+    "expect": [
+      "pneumonia-dose-weight-band"
+    ]
+  }
+]

@@ -1,0 +1,71 @@
+{
+  "title": "Placeholder treatment guideline",
+  "edition": "placeholder-2026",
+  "disclaimer": "ALL CLINICAL VALUES ARE PLACEHOLDERS. NOT CLINICAL GUIDANCE.",
+  "blocks": [
+    {
+      "page": 1,
+      "id": "b1",
+      "kind": "table",
+      "bbox": [
+        40,
+        135,
+        572,
+        310
+      ],
+      "text": "Indication: malaria (ICD-10 B50), confirmed or presumptive. Drug: ATC P01BF01. Dose: use the weight table below.",
+      "cells": [
+        [
+          "Weight (kg)",
+          "Tablets"
+        ],
+        [
+          "5 to <15",
+          "1"
+        ],
+        [
+          "15 to <25",
+          "2"
+        ],
+        [
+          "25 to <35",
+          "3"
+        ]
+      ]
+    },
+    {
+      "page": 1,
+      "id": "b2",
+      "kind": "paragraph",
+      "bbox": [
+        40,
+        335,
+        572,
+        435
+      ],
+      "text": "Pregnancy: not recommended. Drug: ATC J01XX01. Patient group: women (sex F), aged 12 to 50 years inclusive."
+    },
+    {
+      "page": 1,
+      "id": "b3",
+      "kind": "table",
+      "bbox": [
+        40,
+        465,
+        572,
+        620
+      ],
+      "text": "Indication: pneumonia (ICD-10 J18), confirmed or presumptive. Drug: ATC P01BF01. Dose: use the weight table below.",
+      "cells": [
+        [
+          "Weight (kg)",
+          "Tablets"
+        ],
+        [
+          "5 to <35",
+          "2"
+        ]
+      ]
+    }
+  ]
+}

@@ -5,8 +5,8 @@ import { join } from 'node:path';
 import { setup,NOW } from './support.js';
 import { uploadGuideline,setMetadata } from '../../src/registry.js';
 import { digitise } from '../../src/digitiser.js';
-import { generateDrafts } from '../../src/draft.js';
-import { approveNode } from '../../src/review.js';
+import { generateDrafts,draftBlocks as generateSourceDrafts } from '../../src/draft.js';
+import { approveNode,editNode } from '../../src/review.js';
 import { saveFixtures } from '../../src/fixtures.js';
 import { createRelease } from '../../src/release.js';
 import { openEventLog } from '../../src/events.js';
@@ -22,4 +22,12 @@ test('shipped bundle is exact and entire service flow works without HTTP',t=>{
  emr.recordObservation(s,db,p.patient_id,{field:'weight_kg',value:12},opts);emr.recordStatus(s,db,p.patient_id,{field:'pregnant',value:false},opts);emr.recordDiagnosis(s,db,p.patient_id,{icd10:'B50.9',label:'PLACEHOLDER coded diagnosis'},opts);
  assert.equal(emr.patientDiagnoses(s,db,p.patient_id).length,1);
  const r=emr.checkPrescription(s,db,p.patient_id,{atc:'P01BF01',tablets:2,release_version:'poc-demo-0.1.0'},opts);assert.equal(r.result.advice[0].severity,'warn');assert.equal(emr.replayAdvice(s,db,r.shown.seq,opts).matches,true);assert.equal(emr.listPatients(s).length,1);assert.ok(emr.patientEvents(s,db,p.patient_id).length>=6);
+});
+test('PDF source and digitised fixture carry the same explicit applicability with no template invention',()=>{
+ const bundle=JSON.parse(readFileSync(new URL('../../samples/dose-guide/bundle.json',import.meta.url))),source=JSON.parse(readFileSync(new URL('../../samples/dose-guide/source.json',import.meta.url))),fixture=JSON.parse(readFileSync(new URL('../../fixtures/digitised/'+bundle.document_sha256+'.json',import.meta.url)));
+ assert.equal(source.scenarios,undefined);assert.equal(source.guards,undefined);
+ assert.deepEqual(fixture.pages[0].blocks,source.blocks.map(({page,...b})=>b));
+ const drafts=generateSourceDrafts(source.blocks,{documentSha:bundle.document_sha256,atcByBlock:{}});
+ assert.deepEqual(drafts.nodes.map(x=>x.node.applies_to),[{atc:'P01BF01',icd10:'B50'},{atc:'J01XX01',sex:'F',age_years:{min:12,max:50}},{atc:'P01BF01',icd10:'J18'}]);
+ assert.ok(drafts.nodes.every(x=>!x.node.parse_errors));
 });

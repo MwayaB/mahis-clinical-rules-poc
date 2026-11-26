@@ -14,7 +14,17 @@ export function draftBlocks(blocks,{documentSha,atcByBlock}) {
   const isPregnancy=block.kind==='paragraph'&&/^Pregnancy:\s*not recommended\b/i.test(block.text.trim());
   if(!isTable&&!isPregnancy) {unconverted.push({block_id:block.id,reason:'not converted: review manually'});continue;}
   const n=structuredClone(isTable?tableTemplate:predicateTemplate),errors=[];
-  n.id=`${documentSha}-${block.id}`;n.status='draft';n.risk='high';n.placeholder=true;n.reviewers=[];n.applies_to={...n.applies_to,atc:atcByBlock[block.id]??''};
+  n.id=`${documentSha}-${block.id}`;n.status='draft';n.risk='high';n.placeholder=true;n.reviewers=[];n.applies_to={atc:atcByBlock[block.id]??''};
+  if(isPregnancy) n.applies_to.sex='F';
+  // Only explicit source annotations supply additional applicability. Never inherit template indications.
+  const sourceAtc=/\bATC ([A-Z][A-Z0-9]+)\b/.exec(block.text)?.[1];
+  const sourceIcd=/\bICD-10 (?:prefix )?([A-Z][0-9]{2}(?:\.[A-Z0-9]{1,4})?)\b/.exec(block.text)?.[1];
+  const sourceSex=/\bsex ([FMU])\b/.exec(block.text)?.[1];
+  const sourceAge=/\bage(?:d)? (\d+(?:\.\d+)?) to (\d+(?:\.\d+)?) years inclusive\b/.exec(block.text);
+  if(sourceAtc) {if(n.applies_to.atc&&n.applies_to.atc!==sourceAtc) errors.push('Supplied ATC conflicts with source ATC');n.applies_to.atc=sourceAtc;}
+  if(sourceIcd) n.applies_to.icd10=sourceIcd;
+  if(sourceSex) n.applies_to.sex=sourceSex;
+  if(sourceAge) n.applies_to.age_years={min:Number(sourceAge[1]),max:Number(sourceAge[2])};
   n.source={page:block.page,bbox:[...block.bbox],text:block.text};
   if(!n.applies_to.atc.trim()) errors.push('Reviewer must supply the ATC code');
   if(isTable) {

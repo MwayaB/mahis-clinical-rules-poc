@@ -1,10 +1,11 @@
 {
-  "document_sha256": "fec02b46aa10b8bd7474c28cdd0bcc0b6553b161c36def58f973b9ecf32e871b",
+  "document_sha256": "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497",
   "document_id": "PLACEHOLDER-DOSE-GUIDE",
   "edition": "placeholder-2026",
   "atc_by_block": {
     "b1": "P01BF01",
-    "b2": "J01XX01"
+    "b2": "J01XX01",
+    "b3": "P01BF01"
   },
   "fixtures": {
     "b1": [
@@ -25,7 +26,7 @@
           ]
         },
         "expect": [
-          "fec02b46aa10b8bd7474c28cdd0bcc0b6553b161c36def58f973b9ecf32e871b-b1"
+          "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497-b1"
         ]
       },
       {
@@ -60,7 +61,7 @@
           "age_years": 30
         },
         "expect": [
-          "fec02b46aa10b8bd7474c28cdd0bcc0b6553b161c36def58f973b9ecf32e871b-b2"
+          "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497-b2"
         ]
       },
       {
@@ -76,6 +77,64 @@
         },
         "expect": []
       }
+    ],
+    "b3": [
+      {
+        "name": "PLACEHOLDER pneumonia positive",
+        "ctx": {
+          "today": "2026-01-01",
+          "weight_kg": 12,
+          "pregnant": false,
+          "proposed_atc": "P01BF01",
+          "proposed_tablets": 3,
+          "active_diagnoses": [
+            {
+              "icd10": "J18.9",
+              "certainty": "confirmed",
+              "terminology_version": "seed-placeholder-2026"
+            }
+          ]
+        },
+        "expect": [
+          "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497-b3"
+        ]
+      },
+      {
+        "name": "PLACEHOLDER pneumonia negative",
+        "ctx": {
+          "today": "2026-01-01",
+          "weight_kg": 12,
+          "pregnant": false,
+          "proposed_atc": "P01BF01",
+          "proposed_tablets": 2,
+          "active_diagnoses": [
+            {
+              "icd10": "J18.9",
+              "certainty": "confirmed",
+              "terminology_version": "seed-placeholder-2026"
+            }
+          ]
+        },
+        "expect": []
+      }
     ]
+  },
+  "source_note": "All applicability and placeholder doses are stated explicitly in the PDF and exact mock digitised text.",
+  "demo_diagnoses": {
+    "child": {
+      "icd10": "B50.9",
+      "label": "Plasmodium falciparum malaria, unspecified",
+      "certainty": "confirmed"
+    },
+    "adult": {
+      "icd10": "Z34.9",
+      "label": "Supervision of normal pregnancy, unspecified",
+      "certainty": "confirmed"
+    },
+    "pneumonia": {
+      "icd10": "J18.9",
+      "label": "Pneumonia, unspecified organism",
+      "certainty": "confirmed"
+    }
   }
 }

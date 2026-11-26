@@ -1,0 +1,11 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { evaluate } from '../../src/evaluator.js';
+import { projectRules,fixtureGate } from '../../src/compiler.js';
+import { dose } from '../helpers.js';
+import { defaultTerminology as seed } from '../../src/terminology.js';
+const read=p=>JSON.parse(readFileSync(new URL(p,import.meta.url)));
+const manifest={package_version:'fixture',contains_placeholders:true,terminology_version:seed.terminology_version};
+test('five indication fixtures distinguish dose advice from missing-indication warnings',()=>{const fixtures=read('../../fixtures/indication.fixtures.json'),rules=projectRules(dose),pkg={rules,manifest,engine_version:'0.1.0'};assert.equal(fixtures.length,5);fixtureGate(rules,fixtures);for(const [i,f] of fixtures.entries()) {const advice=evaluate(pkg,f.ctx).advice;assert.deepEqual(advice.map(a=>a.rule_id),f.expect);if(i===1) assert.match(advice[0].message,/12 kg/);if(i>=3) {assert.equal(advice[0].severity,'warn');assert.match(advice[0].message,/no indication recorded/);}}});
+test('second placeholder dose rule matches pneumonia independently of malaria',()=>{const pneumonia=read('../../ir/pneumonia_dose_example.ir.json'),fixtures=read('../../fixtures/pneumonia_dose_example.fixtures.json');fixtureGate(projectRules(pneumonia),fixtures);const pkg={rules:projectRules({...dose,nodes:[...dose.nodes,...pneumonia.nodes]}),manifest,engine_version:'0.1.0'};assert.deepEqual(evaluate(pkg,fixtures[1].ctx).advice.map(a=>a.rule_id),['pneumonia-dose-weight-band']);const malaria=read('../../fixtures/indication.fixtures.json')[1];assert.deepEqual(evaluate(pkg,malaria.ctx).advice.map(a=>a.rule_id),['al-dose-weight-band']);});
