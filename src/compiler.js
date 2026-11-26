@@ -31,7 +31,7 @@ export function compile(ir,{dir,privateKey,fixtures,packageVersion='poc-0.1.0'})
  const errors=validateIR(ir);
  for(const n of ir?.nodes??[]) if(n.status==='draft') errors.push(`${n.id}: draft refused`);
  if(errors.length) throw new Error(errors.join('\n'));
- if(!/^poc-\d+\.\d+\.\d+$/.test(packageVersion)) throw new Error('Invalid package version');
+ if(!/^poc-(?:demo-)?\d+\.\d+\.\d+$/.test(packageVersion)) throw new Error('Invalid package version');
  const rules=projectRules(ir); fixtureGate(rules,fixtures);
  const rulesBytes=Buffer.from(canonicalStringify(rules));
  const manifest={package_version:packageVersion,ir_version:'0.1',engine_min_version:ENGINE_VERSION,contains_placeholders:ir.nodes.some(n=>n.placeholder),source_documents:[ir.document],rules_sha256:sha256(rulesBytes),node_count:rules.length};

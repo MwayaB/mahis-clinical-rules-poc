@@ -12,7 +12,7 @@ export function compareVersions(a,b) {
 function validateManifest(m) {
  const errors=[];
  if(!fields(m,manifestFields,manifestFields,'manifest',errors)) throw new Error(errors.join('\n'));
- if(!/^poc-\d+\.\d+\.\d+$/.test(m.package_version)) errors.push('Invalid package_version');
+ if(!/^poc-(?:demo-)?\d+\.\d+\.\d+$/.test(m.package_version)) errors.push('Invalid package_version');
  if(m.ir_version!=='0.1') errors.push('Unsupported IR version');
  try {compareVersions(m.engine_min_version,'0.1.0');} catch {errors.push('Invalid engine minimum');}
  if(typeof m.contains_placeholders!=='boolean'||!Number.isSafeInteger(m.node_count)||m.node_count<1||typeof m.rules_sha256!=='string'||!/^[a-f0-9]{64}$/.test(m.rules_sha256)) errors.push('Invalid manifest values');
