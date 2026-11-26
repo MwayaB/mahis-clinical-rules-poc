@@ -11,6 +11,11 @@ export function evaluate(loadedPackage, ctx) {
   // Known exclusions take priority over missing applicability or clinical inputs.
   if(a.sex!==undefined&&ctx.sex!=null&&a.sex!==ctx.sex) continue;
   if(a.age_years&&ctx.age_years!=null&&(ctx.age_years<a.age_years.min||ctx.age_years>a.age_years.max)) continue;
+  if(a.icd10!==undefined) {
+   const diagnoses=(ctx.active_diagnoses??[]).filter(d=>['confirmed','presumptive'].includes(d.certainty));
+   if(!diagnoses.length) {add(n,'warn',`no indication recorded; cannot check ${n.id}`);continue;}
+   if(!diagnoses.some(d=>d.icd10.startsWith(a.icd10))) continue;
+  }
   const absentApplicability=[];
   if(a.sex!==undefined&&ctx.sex==null) absentApplicability.push('sex');
   if(a.age_years&&ctx.age_years==null) absentApplicability.push('age_years');

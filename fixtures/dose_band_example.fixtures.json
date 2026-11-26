@@ -6,7 +6,13 @@
       "weight_kg": 12,
       "pregnant": false,
       "proposed_atc": "P01BF01",
-      "proposed_tablets": 2
+      "proposed_tablets": 2,
+      "active_diagnoses": [
+        {
+          "icd10": "B50.9",
+          "certainty": "confirmed"
+        }
+      ]
     },
     "expect": [
       "al-dose-weight-band"
@@ -19,7 +25,13 @@
       "weight_kg": 12,
       "pregnant": false,
       "proposed_atc": "P01BF01",
-      "proposed_tablets": 1
+      "proposed_tablets": 1,
+      "active_diagnoses": [
+        {
+          "icd10": "B50.9",
+          "certainty": "confirmed"
+        }
+      ]
     },
     "expect": []
   }

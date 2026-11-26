@@ -36,8 +36,9 @@ export function validateNodes(nodes, { compiled=false }={}) {
     if(!nonempty(s.text)) add('invalid source.text');
    }
   }
-  if(fields(n.applies_to,['atc','sex','age_years'],['atc'],path+'.applies_to',errors)) {
+  if(fields(n.applies_to,['atc','sex','age_years','icd10'],['atc'],path+'.applies_to',errors)) {
    const a=n.applies_to;
+   if(a.icd10!==undefined&&(!nonempty(a.icd10)||! /^[A-Z][0-9]{2}(?:\.[A-Z0-9]{1,4})?$/.test(a.icd10))) add('invalid ICD-10 prefix');
    if(!nonempty(a.atc)) add('invalid ATC');
    if(a.sex!==undefined&&!['F','M','U'].includes(a.sex)) add('invalid applicability sex');
    if(a.age_years!==undefined&&fields(a.age_years,['min','max'],['min','max'],path+'.applies_to.age_years',errors)) {

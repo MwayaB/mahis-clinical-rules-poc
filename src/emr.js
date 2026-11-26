@@ -24,7 +24,6 @@ export function patientDiagnoses(store,db,id) {
 }
 export function checkPrescription(store,db,id,body,{now,keyDir}) {
  getPatient(store,id);exact(body,['atc','tablets','release_version'],['release_version']);
- if(!patientDiagnoses(store,db,id).length) throw new ApiError('Record a diagnosis with an ICD-10 code and label before checking a prescription',409);
  getRelease(store,body.release_version);loadRelease(store,body.release_version,{keyDir});
  return workflow.prescribe({...args(db,id,now),atc:body.atc??null,tablets:body.tablets??null,packageDir:join(store.root,'releases',body.release_version),trustedPublicKeys:[join(keyDir,'dev-public.pem')],eventIds:{prescription:randomUUID(),advice:randomUUID()}});
 }

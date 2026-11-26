@@ -30,7 +30,7 @@ export function openEventLog(path) {
      case 'patient-registered': if(!nonempty(p.name)||!['F','M','U'].includes(p.sex)) errors.push('Invalid registration');break;
      case 'observation-recorded': if(p.field!=='weight_kg'||typeof p.value!=='number'||!Number.isFinite(p.value)||p.value<=0) errors.push('Invalid weight');break;
      case 'status-recorded': if(p.field!=='pregnant'||typeof p.value!=='boolean') errors.push('Invalid pregnancy status');break;
-     case 'diagnosis-recorded': if(!nonempty(p.icd10)||!nonempty(p.label)||!['suspected','confirmed'].includes(p.certainty)) errors.push('Invalid diagnosis');break;
+     case 'diagnosis-recorded': if(!nonempty(p.icd10)||!nonempty(p.label)||!['suspected','confirmed','presumptive','ruled-out'].includes(p.certainty)) errors.push('Invalid diagnosis');break;
      case 'prescription-drafted': if(p.atc!==null&&!nonempty(p.atc)||p.tablets!==null&&(!Number.isInteger(p.tablets)||p.tablets<0)) errors.push('Invalid prescription');break;
      case 'advice-shown': {
       if(!validDay(p.today)||!Array.isArray(p.rule_ids)||!p.rule_ids.every(nonempty)||!Array.isArray(p.severities)||p.severities.some(x=>!['block','warn','info'].includes(x))||p.rule_ids.length!==p.severities.length||!nonempty(p.package_version)||!nonempty(p.engine_version)||![p.inputs_hash,p.rules_sha256,p.manifest_sha256].every(x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x))||!Number.isSafeInteger(p.context_up_to_seq)||p.context_up_to_seq<0||!Array.isArray(p.advice)) errors.push('Invalid advice audit');

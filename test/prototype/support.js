@@ -29,7 +29,7 @@ export async function releasedHTTP(s) {
  const drafts=await s.ok(`/api/guidelines/${upload.sha256}/draft`,{atc_by_block:{b1:'P01BF01',b2:'J01XX01'}});
  for(const {node:n} of drafts.nodes) {
   await s.ok(`/api/ir/${n.id}/approve`,{reviewer:'placeholder-reviewer-a'});await s.ok(`/api/ir/${n.id}/approve`,{reviewer:'placeholder-reviewer-b'});
-  const ctx={sex:'F',age_years:30,today:'2026-01-01',weight_kg:12,pregnant:n.type==='predicate',proposed_atc:n.applies_to.atc,proposed_tablets:2};
+  const ctx={active_diagnoses:[{icd10:'B50.9',certainty:'confirmed'}],sex:'F',age_years:30,today:'2026-01-01',weight_kg:12,pregnant:n.type==='predicate',proposed_atc:n.applies_to.atc,proposed_tablets:2};
   await s.ok('/api/fixtures',{node_id:n.id,entries:[{name:'PLACEHOLDER positive',ctx,expect:[n.id]},{name:'PLACEHOLDER negative',ctx:{...ctx,...(n.type==='table'?{proposed_tablets:1}:{pregnant:false})},expect:[]}]});
  }
  const release=await s.ok('/api/releases',{document_sha256:upload.sha256,version:'poc-demo-0.1.0'});return {upload,digitisation,drafts,release};

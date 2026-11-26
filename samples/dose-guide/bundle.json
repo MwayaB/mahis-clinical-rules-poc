@@ -15,7 +15,13 @@
           "weight_kg": 12,
           "pregnant": false,
           "proposed_atc": "P01BF01",
-          "proposed_tablets": 2
+          "proposed_tablets": 2,
+          "active_diagnoses": [
+            {
+              "icd10": "B50.9",
+              "certainty": "confirmed"
+            }
+          ]
         },
         "expect": [
           "fec02b46aa10b8bd7474c28cdd0bcc0b6553b161c36def58f973b9ecf32e871b-b1"
@@ -28,7 +34,13 @@
           "weight_kg": 12,
           "pregnant": false,
           "proposed_atc": "P01BF01",
-          "proposed_tablets": 1
+          "proposed_tablets": 1,
+          "active_diagnoses": [
+            {
+              "icd10": "B50.9",
+              "certainty": "confirmed"
+            }
+          ]
         },
         "expect": []
       }

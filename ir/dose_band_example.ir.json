@@ -27,7 +27,8 @@
       "id": "al-dose-weight-band",
       "type": "table",
       "applies_to": {
-        "atc": "P01BF01"
+        "atc": "P01BF01",
+        "icd10": "B50"
       },
       "input": "weight_kg",
       "coverage": {
