@@ -1,0 +1,10 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { openEventLog,validDay } from '../src/events.js';
+import { buildContext } from '../src/context.js';
+const stamp='2026-01-01T10:00:00.000Z';
+function setup(t) {const db=openEventLog(':memory:');t.after(()=>db.close());let id=0;return {db,add:(payload,extra={})=>db.append({event_id:String(++id),patient_id:'P1',type:'observation-recorded',payload,occurred_at:stamp,...extra})};}
+test('projection uses seq, timestamps and permanent retirement including correction chains',t=>{const {db,add}=setup(t);add({field:'weight_kg',value:12});add({field:'weight_kg',value:13},{occurred_at:'2025-01-01T00:00:00Z'});add({field:'weight_kg',value:10,supersedes:'1'});add({field:'weight_kg',value:11,supersedes:'3'});const c=buildContext(db.listForPatient('P1'),{today:'2026-01-01'});assert.equal(c.weight_kg,11);assert.equal(c.recorded_at.weight_kg,stamp);assert.ok(Object.isFrozen(c.recorded_at));assert.equal(c.pregnant,null);assert.equal(buildContext(db.listForPatient('P1',{upToSeq:2}),{today:c.today}).weight_kg,13);assert.equal(db.listForPatient('other').length,0);});
+test('invalid events and correction targets rejected',t=>{const {db,add}=setup(t);add({field:'weight_kg',value:12});for(const e of [{payload:{field:'weight_kg',value:NaN}},{type:'unknown'},{occurred_at:'2026-02-30T00:00:00Z'},{patient_id:'P2',payload:{field:'weight_kg',value:10,supersedes:'1'}},{payload:{field:'weight_kg',value:10,unknown:1}},{payload:{field:'weight_kg',value:10,supersedes:'future'}},{event_id:'1'}]) assert.throws(()=>add({field:'weight_kg',value:10},e));assert.equal(db.listForPatient('P1').length,1);});
+test('transaction rolls back partial writes',t=>{const {db,add}=setup(t);assert.throws(()=>db.transaction(()=>{add({field:'weight_kg',value:12});throw Error('fail');}));assert.equal(db.listForPatient('P1').length,0);});
+test('ISO dates validated without clock reads',()=>{assert.ok(validDay('2024-02-29'));assert.ok(!validDay('2026-02-29'));assert.throws(()=>buildContext([],{today:'bad'}));});
