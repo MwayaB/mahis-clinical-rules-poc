@@ -177,6 +177,10 @@ CLI commands take `--db FILE --patient-id ID` plus the following arguments:
 
 ## Decisions
 
+- **Applicability:** drug, optional sex and inclusive age range are checked before clinical inputs. Known exclusions emit nothing; missing applicability data remains visible.
+- **Indications:** `applies_to.icd10` is a case-sensitive prefix match including the dot, against active `confirmed` or `presumptive` diagnoses. `suspected` and `ruled-out` never satisfy it. No active indication yields `warn: no indication recorded; cannot check <node id>` and still records the prescription. An unrelated active indication skips the rule.
+- **Data-quality limits:** weight 0.5–200 kg and age 0–120 years inclusive; pregnancy true requires sex F and recorded age 10–60, narrowed by pregnancy rule ranges. The placeholder pregnancy sample uses 12–50 inclusive.
+
 - **Coverage endpoints:** `coverage` means `[min,max)`, matching the example's excluded upper endpoint. Require exact coverage, including the lower endpoint and excluding the upper endpoint. Adjacent bands may use either complementary inclusion arrangement; double inclusion is overlap and double exclusion is a gap. Bands outside coverage are refused. IR does not provide endpoint flags for coverage itself; an inclusive maximum cannot be represented in this PoC.
 - **Supported fields and units:** tables accept `weight_kg` and integer, nonnegative `tablet` values. Predicates accept only the five specified context fields and non-null scalar equality values of the matching type. Unknown context condition fields are refused. No expression interpreter, clinical content generation or inferred clinical rules.
 - **Missing prescription:** no proposed ATC yields a synthetic `input-proposed_atc` warning with `context:proposed_atc` source reference. This warning identifies missing context rather than a clinical rule. Missing tablet count yields a warning per applicable table. Both missing weight and tablet count produce their own advice. No ATC match produces no clinical advice. A missing predicate field warns even when another equality mismatches.
@@ -197,3 +201,9 @@ CLI commands take `--db FILE --patient-id ID` plus the following arguments:
 Built and committed in the required working order: canonical JSON; IR validation; compiler; package verification; evaluator; events/context; CLI/workflow/replay; scripts/documentation. The complete suite was run after every part. The final suite and demonstration results are recorded in `VALIDATION.md`.
 
 No requested implementation requirement is intentionally left unmet. Qualification: inclusive maximum coverage is not expressible under the documented conservative convention; source provenance cannot be authenticated without real source documents; replay requires retained historical packages. The original core has no production clinical validation, deployment, sync, LLM, FHIR support or additional rule node types. The local HTTP server and UI added in the prototype phase are described above.
+
+## Data-quality guards
+
+`src/plausibility.js` defines entry guards, separate from clinical rule content. They reject implausible recorded data with HTTP 422 and a field/limit message; these bounds are not clinical limits or dosing recommendations. Age is optional at registration and stays null when missing. Recording pregnancy true requires eligible recorded sex and age. The status API intersects the global range with pregnancy ranges in published releases (all releases, conservatively); workflow/CLI use the sample pregnancy rule when no rules are supplied. False pregnancy status remains recordable without inferring eligibility. Unknown observation/status fields remain rejected by the existing event allowlists.
+
+Run the corrected standalone demo with Node 22+: `bash scripts/demo.sh`. It prints child age 4 / 15 kg advice before diagnosis, after confirmed malaria with an incorrect dose, after correction, then a separate adult age 30 pregnancy block. `scripts/prototype-demo.sh` runs the same scenarios through curl and the API.

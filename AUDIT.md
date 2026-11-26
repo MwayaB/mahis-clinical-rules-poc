@@ -150,3 +150,51 @@ Observed: Prototype supplies diagnosis; CLI omits diagnosis but only shows dose 
 
 Demonstration: `audit-D2` regression test (expected corrected behavior; pre-fix outcomes recorded above).
 
+
+## Final original-task outcomes
+
+| Checks | Before | Final |
+|---|---|---|
+| A1–A5 | PRESENT | Fixed |
+| B1–B5 | PRESENT | Fixed |
+| B6 | PARTIAL | Fixed |
+| C1 | PARTIAL | Fixed |
+| C2–C3 | PRESENT | Fixed |
+| C4 | ABSENT | ABSENT before; unchanged allowlists |
+| C5 | PRESENT | Fixed |
+| D1 | PARTIAL | Fixed |
+| D2 | PRESENT | Fixed |
+
+### Verification and commits
+
+All 18 audit-ID tests live in `test/audit.test.js`. They pass in the corrected tree. In an isolated archive of pre-fix `999dbd1`, A1–A5, B1–B6, C1–C3, C5 and D1–D2 fail; C4 passes. The only harness adaptation made for that archive is dynamically importing the new plausibility module inside C5 so its absence does not prevent all tests loading. Some failures occur at prerequisites: B2/B6/C2/C3 reject the newly supplied age at registration before reaching the later assertion; C1 fails at the original HTTP 400 rather than 422; C5/D2 find the new module/script absent. These are regression sensitivity checks, not claims that each downstream assertion was separately mutation-tested.
+
+| Commit stage | Node 22.18 full suite | Skipped |
+|---|---|---|
+| Audit `58ae6ef` | 121/123 (two pre-existing URL-space failures) | 0 |
+| Applicability `31acc4a` | 128/128 | 0 |
+| Indication `3c8ac1d` | 134/134 | 0 |
+| Plausibility `f48adc8` | 139/139 | 0 |
+| Demo `ea7a583` | 141/141 | 0 |
+| README/report | 141/141 | 0 |
+
+Every suite includes the unchanged evaluator purity test. HTTP suites require execution outside the sandbox to bind loopback. No npm dependencies added. Node 18 remains unsupported as declared in package.json.
+
+### Files changed and test corrections
+
+- `src/ir.js`, `src/evaluator.js`: schema validation, pregnancy guard and applicability/indication evaluation. `src/compiler.js`: preserves applicability (already copied the full object), now requires applicable nonmissing indication fixtures for clinical coverage.
+- `src/context.js`, `src/workflow.js`, `src/events.js`: demographic projection/entry, active diagnoses with certainty, plausibility validation; no ambient access added to evaluator.
+- `src/emr.js`: removes the diagnosis-presence block, accepts age, checks published pregnancy ranges. `src/cli.js`: age registration option.
+- `src/plausibility.js`: central data-quality bounds. `src/fixtures.js`: expanded context validation, applicability-aware independent oracle and generated contexts.
+- `src/draft.js`: retains template applicability fields instead of discarding them. This prototype still uses human-authored placeholder templates; applicability must be reviewed with each draft.
+- `src/server.js`: decodes static public file URL with fileURLToPath to resolve the pre-existing workspace-space failure.
+- `public/emr.html`, `public/emr.js`: age entry, certainty entry/display, and accurate missing-indication wording.
+- `ir/contraindication_example.ir.json`: only applicability added (`sex: F`, age 12–50). `ir/dose_band_example.ir.json`: only applicability added (`icd10: B50`). Clinical values and placeholder flags unchanged.
+- `fixtures/*.fixtures.json`, `samples/dose-guide/bundle.json`: female adult applicability and confirmed indication contexts. Added audit tests exercise missing inputs, exclusions, certainty and API behavior.
+- `test/helpers.js`, `test/prototype/support.js`, `test/prototype/fixtures.test.js`, `test/prototype/release.test.js`, `test/prototype/e2e.test.js`: supply adult demographics/confirmed indications to existing scenarios that intend an applicable clinical check.
+- `test/prototype/emr.test.js`: old 409/no-prescription assertion encoded defect B2; replaced with successful recorded prescription plus visible no-indication warning and adjusted event counts. Added adult age; diagnosis certainty confirmed for dose scenario.
+- `test/workflow_end_to_end.test.js`: fileURLToPath fixes CLI test path; no assertion weakened.
+- `scripts/demo.sh`, `scripts/demo-flow.js`, `scripts/prototype-flow.js`: realistic separate scenarios and explicit no-indication advice. Demo creates temporary databases and cleans them up.
+- `README.md`, `AUDIT.md`: decisions, guards, evidence and outcome report.
+
+No browser interaction/visual QA performed; API, static UI assertions and both executable demo paths are tested. No real clinical source validity is asserted. The narrower sample pregnancy range is placeholder applicability, not clinical guidance.
