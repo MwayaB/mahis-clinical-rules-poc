@@ -1,7 +1,7 @@
 import { evaluate } from './evaluator.js';
 import { mkdirSync, writeFileSync, renameSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { createHash, sign } from 'node:crypto';
+import { createHash, sign, createPrivateKey } from 'node:crypto';
 import { canonicalStringify } from './canonical.js';
 import { validateIR, tableFields, predicateFields } from './ir.js';
 export const ENGINE_VERSION='0.1.0';
@@ -36,7 +36,9 @@ export function compile(ir,{dir,privateKey,fixtures,packageVersion='poc-0.1.0'})
  const rulesBytes=Buffer.from(canonicalStringify(rules));
  const manifest={package_version:packageVersion,ir_version:'0.1',engine_min_version:ENGINE_VERSION,contains_placeholders:ir.nodes.some(n=>n.placeholder),source_documents:[ir.document],rules_sha256:sha256(rulesBytes),node_count:rules.length};
  const manifestBytes=Buffer.from(canonicalStringify(manifest));
- const signature=sign(null,manifestBytes,privateKey);
+ const key=privateKey?.type==='private'?privateKey:createPrivateKey(privateKey);
+ if(key.asymmetricKeyType!=='ed25519') throw new Error('Ed25519 private key required');
+ const signature=sign(null,manifestBytes,key);
  if(existsSync(dir)) throw new Error('Output already exists');
  mkdirSync(dirname(dir),{recursive:true});
  const staging=dir+'.staging';

@@ -14,3 +14,4 @@ test('deterministic signed package and placeholder manifest',()=>{
  } finally {rmSync(root,{recursive:true,force:true});}
 });
 test('compiler rejects drafts and unknown node types before writing',()=>{for(const mutation of [x=>x.nodes[0].status='draft',x=>x.nodes[0].type='unknown']) {const x=clone(ir);mutation(x);assert.throws(()=>compile(x,{}));}});
+test('compiler refuses a non-Ed25519 signing key',()=>{const {privateKey}=generateKeyPairSync('ec',{namedCurve:'prime256v1'});assert.throws(()=>compile(ir,{dir:'unused',privateKey,fixtures}),/Ed25519/);});

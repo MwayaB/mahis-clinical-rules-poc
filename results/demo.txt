@@ -1,0 +1,270 @@
+(node:32750) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PLACEHOLDER SOFTWARE DEMO — all examples are not clinical guidance.
+Keeping existing development keypair
+{
+  "package_version": "poc-0.1.0",
+  "ir_version": "0.1",
+  "engine_min_version": "0.1.0",
+  "contains_placeholders": true,
+  "source_documents": [
+    {
+      "id": "EXAMPLE-DOSE_BAND_EXAMPLE",
+      "edition": "placeholder-2026",
+      "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "rules_sha256": "1f4ff1abc9dac8c2d667525a13c20b73f74ce8a2f501e94d4dbcd481be0024b5",
+  "node_count": 1
+}
+{
+  "event_id": "1923f521-c80b-4a63-ae73-fef9c2455232",
+  "patient_id": "PLACEHOLDER-P1",
+  "type": "patient-registered",
+  "payload": {
+    "name": "PLACEHOLDER child",
+    "sex": "U"
+  },
+  "occurred_at": "2026-11-26T22:06:20.244Z",
+  "seq": 1
+}
+(node:32754) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "event_id": "5e997b43-1905-4961-901d-8b09fde5b875",
+  "patient_id": "PLACEHOLDER-P1",
+  "type": "observation-recorded",
+  "payload": {
+    "field": "weight_kg",
+    "value": 12
+  },
+  "occurred_at": "2026-11-26T22:06:20.280Z",
+  "seq": 2
+}
+(node:32755) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32756) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "result": {
+    "advice": [
+      {
+        "rule_id": "al-dose-weight-band",
+        "severity": "warn",
+        "message": "PLACEHOLDER: At 12 kg the guideline dose is 1 tablet; 2 recorded.",
+        "source_ref": "EXAMPLE-DOSE_BAND_EXAMPLE:p1:al-dose-weight-band"
+      }
+    ],
+    "package_version": "poc-0.1.0",
+    "engine_version": "0.1.0",
+    "contains_placeholders": true,
+    "inputs_hash": "7daf007fa60a1973280be136763dd199da8c5bc8667bb552f03f6e761fe4e9a3"
+  },
+  "draft": {
+    "event_id": "666496af-b40f-4ddd-84f2-31a74a59f604",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "prescription-drafted",
+    "payload": {
+      "atc": "P01BF01",
+      "tablets": 2
+    },
+    "occurred_at": "2026-11-26T22:06:20.316Z",
+    "seq": 3
+  },
+  "shown": {
+    "event_id": "43b2ef9e-2160-425f-948a-ad3b6a3ebabc",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "advice-shown",
+    "payload": {
+      "rule_ids": [
+        "al-dose-weight-band"
+      ],
+      "severities": [
+        "warn"
+      ],
+      "package_version": "poc-0.1.0",
+      "engine_version": "0.1.0",
+      "inputs_hash": "7daf007fa60a1973280be136763dd199da8c5bc8667bb552f03f6e761fe4e9a3",
+      "context_up_to_seq": 3,
+      "rules_sha256": "1f4ff1abc9dac8c2d667525a13c20b73f74ce8a2f501e94d4dbcd481be0024b5",
+      "manifest_sha256": "7c066d76092aeb44bf32eb1a9c965710cbae4c4ec15a7460de956b06aec9f68b",
+      "today": "2026-11-26",
+      "advice": [
+        {
+          "rule_id": "al-dose-weight-band",
+          "severity": "warn",
+          "message": "PLACEHOLDER: At 12 kg the guideline dose is 1 tablet; 2 recorded.",
+          "source_ref": "EXAMPLE-DOSE_BAND_EXAMPLE:p1:al-dose-weight-band"
+        }
+      ]
+    },
+    "occurred_at": "2026-11-26T22:06:20.316Z",
+    "seq": 4
+  },
+  "exitCode": 0
+}
+{
+  "event_id": "c2fa5728-e534-4069-b987-d1021e33a657",
+  "patient_id": "PLACEHOLDER-P1",
+  "type": "observation-recorded",
+  "payload": {
+    "field": "weight_kg",
+    "value": 10
+  },
+  "occurred_at": "2026-11-26T22:06:20.386Z",
+  "seq": 5
+}
+(node:32760) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32761) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "result": {
+    "advice": [],
+    "package_version": "poc-0.1.0",
+    "engine_version": "0.1.0",
+    "contains_placeholders": true,
+    "inputs_hash": "3f982b16189b9fe68e2c85241cc66523b93b4755b99d3e38ccafd30334eb48b0"
+  },
+  "draft": {
+    "event_id": "94ef2810-78e2-43ac-b041-afd6c3dbfd89",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "prescription-drafted",
+    "payload": {
+      "atc": "P01BF01",
+      "tablets": 1
+    },
+    "occurred_at": "2026-11-26T22:06:20.424Z",
+    "seq": 6
+  },
+  "shown": {
+    "event_id": "1a8ebe9a-5108-4e0a-9632-f4386de93318",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "advice-shown",
+    "payload": {
+      "rule_ids": [],
+      "severities": [],
+      "package_version": "poc-0.1.0",
+      "engine_version": "0.1.0",
+      "inputs_hash": "3f982b16189b9fe68e2c85241cc66523b93b4755b99d3e38ccafd30334eb48b0",
+      "context_up_to_seq": 6,
+      "rules_sha256": "1f4ff1abc9dac8c2d667525a13c20b73f74ce8a2f501e94d4dbcd481be0024b5",
+      "manifest_sha256": "7c066d76092aeb44bf32eb1a9c965710cbae4c4ec15a7460de956b06aec9f68b",
+      "today": "2026-11-26",
+      "advice": []
+    },
+    "occurred_at": "2026-11-26T22:06:20.424Z",
+    "seq": 7
+  },
+  "exitCode": 0
+}
+Events table (ordered JSON rows from SQLite):
+[
+  {
+    "seq": 1,
+    "event_id": "1923f521-c80b-4a63-ae73-fef9c2455232",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "patient-registered",
+    "payload": {
+      "name": "PLACEHOLDER child",
+      "sex": "U"
+    },
+    "occurred_at": "2026-11-26T22:06:20.244Z"
+  },
+  {
+    "seq": 2,
+    "event_id": "5e997b43-1905-4961-901d-8b09fde5b875",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "observation-recorded",
+    "payload": {
+      "field": "weight_kg",
+      "value": 12
+    },
+    "occurred_at": "2026-11-26T22:06:20.280Z"
+  },
+  {
+    "seq": 3,
+    "event_id": "666496af-b40f-4ddd-84f2-31a74a59f604",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "prescription-drafted",
+    "payload": {
+      "atc": "P01BF01",
+      "tablets": 2
+    },
+    "occurred_at": "2026-11-26T22:06:20.316Z"
+  },
+  {
+    "seq": 4,
+    "event_id": "43b2ef9e-2160-425f-948a-ad3b6a3ebabc",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "advice-shown",
+    "payload": {
+      "advice": [
+        {
+          "message": "PLACEHOLDER: At 12 kg the guideline dose is 1 tablet; 2 recorded.",
+          "rule_id": "al-dose-weight-band",
+          "severity": "warn",
+          "source_ref": "EXAMPLE-DOSE_BAND_EXAMPLE:p1:al-dose-weight-band"
+        }
+      ],
+      "context_up_to_seq": 3,
+      "engine_version": "0.1.0",
+      "inputs_hash": "7daf007fa60a1973280be136763dd199da8c5bc8667bb552f03f6e761fe4e9a3",
+      "manifest_sha256": "7c066d76092aeb44bf32eb1a9c965710cbae4c4ec15a7460de956b06aec9f68b",
+      "package_version": "poc-0.1.0",
+      "rule_ids": [
+        "al-dose-weight-band"
+      ],
+      "rules_sha256": "1f4ff1abc9dac8c2d667525a13c20b73f74ce8a2f501e94d4dbcd481be0024b5",
+      "severities": [
+        "warn"
+      ],
+      "today": "2026-11-26"
+    },
+    "occurred_at": "2026-11-26T22:06:20.316Z"
+  },
+  {
+    "seq": 5,
+    "event_id": "c2fa5728-e534-4069-b987-d1021e33a657",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "observation-recorded",
+    "payload": {
+      "field": "weight_kg",
+      "value": 10
+    },
+    "occurred_at": "2026-11-26T22:06:20.386Z"
+  },
+  {
+    "seq": 6,
+    "event_id": "94ef2810-78e2-43ac-b041-afd6c3dbfd89",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "prescription-drafted",
+    "payload": {
+      "atc": "P01BF01",
+      "tablets": 1
+    },
+    "occurred_at": "2026-11-26T22:06:20.424Z"
+  },
+  {
+    "seq": 7,
+    "event_id": "1a8ebe9a-5108-4e0a-9632-f4386de93318",
+    "patient_id": "PLACEHOLDER-P1",
+    "type": "advice-shown",
+    "payload": {
+      "advice": [],
+      "context_up_to_seq": 6,
+      "engine_version": "0.1.0",
+      "inputs_hash": "3f982b16189b9fe68e2c85241cc66523b93b4755b99d3e38ccafd30334eb48b0",
+      "manifest_sha256": "7c066d76092aeb44bf32eb1a9c965710cbae4c4ec15a7460de956b06aec9f68b",
+      "package_version": "poc-0.1.0",
+      "rule_ids": [],
+      "rules_sha256": "1f4ff1abc9dac8c2d667525a13c20b73f74ce8a2f501e94d4dbcd481be0024b5",
+      "severities": [],
+      "today": "2026-11-26"
+    },
+    "occurred_at": "2026-11-26T22:06:20.424Z"
+  }
+]
+(node:32764) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Demo assertions passed: 12 kg / 2 tablets warns; 10 kg / 1 tablet has no advice. All values are placeholders.
