@@ -9,15 +9,16 @@ function showAdvice(result) {
 }
 async function refreshPatient() {
  if(!patientId) return;
- const [ctx,events,patients]=await Promise.all([api(base()+'/context'),api(base()+'/events'),api('/api/patients')]);const patient=patients.find(p=>p.patient_id===patientId);$('patient-title-active').textContent=patient.name;
- $('observations').replaceChildren(...[['weight_kg','Weight (kg)'],['pregnant','Pregnancy status']].map(([key,label])=>el('div',{class:'observation-value'},el('span',{class:'muted'},label),ctx[key]===null?el('strong',{},el('span',{class:'badge missing'},'not recorded')):el('strong',{},key==='pregnant'?(ctx[key]?'Pregnant':'Not pregnant'):String(ctx[key])),el('p',{class:'source-meta'},ctx.recorded_at[key]?'Recorded '+ctx.recorded_at[key]:'Date not recorded'))));
+ const [ctx,events,patients,diagnoses]=await Promise.all([api(base()+'/context'),api(base()+'/events'),api('/api/patients'),api(base()+'/diagnoses')]);const patient=patients.find(p=>p.patient_id===patientId);$('pregnant').value=ctx.pregnant===null?'':String(ctx.pregnant);$('patient-title-active').textContent=patient.name;
+ $('observations').replaceChildren(...[['weight_kg','Weight (kg)'],['pregnant','Pregnancy status']].map(([key,label])=>el('div',{class:'observation-value'},el('span',{class:'muted'},label),ctx[key]===null?el('strong',{},el('span',{class:'badge missing'},'not recorded')):el('strong',{},key==='pregnant'?(ctx[key]?'Pregnant':'Not pregnant'):`${ctx[key]} kg`),el('p',{class:'source-meta'},ctx.recorded_at[key]?'Recorded '+ctx.recorded_at[key]:'Date not recorded'))));
+ $('diagnosis-summary').replaceChildren(diagnoses.length?el('ul',{},diagnoses.map(d=>el('li',{},el('strong',{},d.icd10),' · '+d.label,el('p',{class:'source-meta'},'Recorded '+d.recorded_at)))):el('p',{},el('span',{class:'badge missing'},'not recorded'),' · Required before prescription check'));
  $('events').replaceChildren(...events.map(e=>{
   const entry=el('details',{class:'event',open:e.type==='advice-shown'},el('summary',{},`#${e.seq} · ${e.type} · ${e.occurred_at}`));
   if(e.type==='advice-shown') {
    entry.append(el('p',{class:'hash'},`Package version: ${e.payload.package_version}`),el('p',{class:'hash'},`Engine version: ${e.payload.engine_version}`),el('p',{class:'hash'},`Inputs hash: ${e.payload.inputs_hash}`));
    const button=el('button',{type:'button',class:'secondary'},'Replay advice #'+e.seq),result=el('p');action(button,async()=>{const r=await api(`/api/events/${e.seq}/replay`,{});result.textContent=r.matches?'Replay matches the recorded advice.':'Replay does not match.';notice(result.textContent);});entry.append(button,result);
   }
-  entry.append(el('pre',{},JSON.stringify(e.payload,null,2)));return entry;
+  entry.append(el('details',{},el('summary',{},'Raw event payload'),el('pre',{},JSON.stringify(e.payload,null,2))));return entry;
  }));
 }
 async function listPatients() {

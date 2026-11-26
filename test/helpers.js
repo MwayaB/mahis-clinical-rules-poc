@@ -19,6 +19,6 @@ export function environment(t) {
  compile(ir,{dir,privateKey:keys.privateKey,fixtures});const db=openEventLog(join(root,'events.db'));t.after(()=>db.close());
  let id=0;const args=()=>({db,today:'2026-01-01',occurredAt:'2026-01-01T10:00:00.000Z',patientId:'P1',eventId:'id-'+(++id)});
  const rx=(changes={})=>prescribe({...args(),packageDir:dir,trustedPublicKeys:[pub],atc:'P01BF01',tablets:2,eventIds:{prescription:'rx-'+(++id),advice:'advice-'+(++id)},...changes});
- register({...args(),name:'PLACEHOLDER child',sex:'U'});
+ register({...args(),name:'PLACEHOLDER test patient (age unspecified)',sex:'U'});
  return {root,keys,pub,dir,fixtures,db,args,rx};
 }

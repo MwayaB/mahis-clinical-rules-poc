@@ -74,6 +74,7 @@ export async function startServer({host='127.0.0.1',port=8080,dataDir=new URL('.
    if(path==='/api/patients'&&method==='POST') return send(201,emr.createPatient(store,events,await jsonBody(req),meta()));
    if((match=/^\/api\/patients\/([^/]+)\/(observations|status|diagnoses|prescriptions\/check|events|context)$/.exec(path))) {
     const id=decodeURIComponent(match[1]),action=match[2];
+    if(action==='diagnoses'&&method==='GET') return send(200,emr.patientDiagnoses(store,events,id));
     if(action==='events'&&method==='GET') return send(200,emr.patientEvents(store,events,id));
     if(action==='context'&&method==='GET') return send(200,emr.patientContext(store,events,id,meta()));
     if(method==='POST') {const fn={observations:emr.recordObservation,status:emr.recordStatus,diagnoses:emr.recordDiagnosis,'prescriptions/check':emr.checkPrescription}[action];if(fn) return send(200,fn(store,events,id,await jsonBody(req),meta()));}

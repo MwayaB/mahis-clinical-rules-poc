@@ -1,0 +1,796 @@
+
+> clinical-rules-placeholder-poc@0.1.0 test
+> node --test
+
+TAP version 13
+# (node:7583) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: example band 0 at 5
+ok 1 - example band 0 at 5
+  ---
+  duration_ms: 2.947125
+  type: 'test'
+  ...
+# Subtest: example band 0 at 4.99
+ok 2 - example band 0 at 4.99
+  ---
+  duration_ms: 0.470667
+  type: 'test'
+  ...
+# Subtest: example band 0 at 14.99
+ok 3 - example band 0 at 14.99
+  ---
+  duration_ms: 0.284209
+  type: 'test'
+  ...
+# Subtest: example band 0 at 15
+ok 4 - example band 0 at 15
+  ---
+  duration_ms: 0.083666
+  type: 'test'
+  ...
+# Subtest: example band 1 at 15
+ok 5 - example band 1 at 15
+  ---
+  duration_ms: 0.069458
+  type: 'test'
+  ...
+# Subtest: example band 1 at 14.99
+ok 6 - example band 1 at 14.99
+  ---
+  duration_ms: 0.064292
+  type: 'test'
+  ...
+# Subtest: example band 1 at 24.99
+ok 7 - example band 1 at 24.99
+  ---
+  duration_ms: 0.056833
+  type: 'test'
+  ...
+# Subtest: example band 1 at 25
+ok 8 - example band 1 at 25
+  ---
+  duration_ms: 0.060292
+  type: 'test'
+  ...
+# Subtest: example band 2 at 25
+ok 9 - example band 2 at 25
+  ---
+  duration_ms: 0.328916
+  type: 'test'
+  ...
+# Subtest: example band 2 at 24.99
+ok 10 - example band 2 at 24.99
+  ---
+  duration_ms: 0.33225
+  type: 'test'
+  ...
+# Subtest: example band 2 at 34.99
+ok 11 - example band 2 at 34.99
+  ---
+  duration_ms: 0.1195
+  type: 'test'
+  ...
+# Subtest: example band 2 at 35
+ok 12 - example band 2 at 35
+  ---
+  duration_ms: 0.04925
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 0 at 5
+ok 13 - alternate inclusion band 0 at 5
+  ---
+  duration_ms: 0.055833
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 0 at 4.99
+ok 14 - alternate inclusion band 0 at 4.99
+  ---
+  duration_ms: 0.045917
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 0 at 14.99
+ok 15 - alternate inclusion band 0 at 14.99
+  ---
+  duration_ms: 0.658042
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 0 at 15
+ok 16 - alternate inclusion band 0 at 15
+  ---
+  duration_ms: 0.061417
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 1 at 15
+ok 17 - alternate inclusion band 1 at 15
+  ---
+  duration_ms: 0.049333
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 1 at 14.99
+ok 18 - alternate inclusion band 1 at 14.99
+  ---
+  duration_ms: 0.049584
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 1 at 24.99
+ok 19 - alternate inclusion band 1 at 24.99
+  ---
+  duration_ms: 0.04425
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 1 at 25
+ok 20 - alternate inclusion band 1 at 25
+  ---
+  duration_ms: 0.042708
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 2 at 25
+ok 21 - alternate inclusion band 2 at 25
+  ---
+  duration_ms: 0.041167
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 2 at 24.99
+ok 22 - alternate inclusion band 2 at 24.99
+  ---
+  duration_ms: 0.041833
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 2 at 34.99
+ok 23 - alternate inclusion band 2 at 34.99
+  ---
+  duration_ms: 0.042042
+  type: 'test'
+  ...
+# Subtest: alternate inclusion band 2 at 35
+ok 24 - alternate inclusion band 2 at 35
+  ---
+  duration_ms: 0.037334
+  type: 'test'
+  ...
+# Subtest: recursive canonical ordering and number encoding
+ok 25 - recursive canonical ordering and number encoding
+  ---
+  duration_ms: 1.305833
+  type: 'test'
+  ...
+# Subtest: reject all non JSON values
+ok 26 - reject all non JSON values
+  ---
+  duration_ms: 2.125875
+  type: 'test'
+  ...
+# (node:7585) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: deterministic signed package and placeholder manifest
+ok 27 - deterministic signed package and placeholder manifest
+  ---
+  duration_ms: 12.673
+  type: 'test'
+  ...
+# Subtest: compiler rejects drafts and unknown node types before writing
+ok 28 - compiler rejects drafts and unknown node types before writing
+  ---
+  duration_ms: 0.702709
+  type: 'test'
+  ...
+# Subtest: compiler refuses a non-Ed25519 signing key
+ok 29 - compiler refuses a non-Ed25519 signing key
+  ---
+  duration_ms: 0.629667
+  type: 'test'
+  ...
+# (node:7586) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: correct dose
+ok 30 - correct dose
+  ---
+  duration_ms: 5.14375
+  type: 'test'
+  ...
+# Subtest: wrong dose
+ok 31 - wrong dose
+  ---
+  duration_ms: 9.800458
+  type: 'test'
+  ...
+# Subtest: missing weight
+ok 32 - missing weight
+  ---
+  duration_ms: 0.802458
+  type: 'test'
+  ...
+# Subtest: outside coverage
+ok 33 - outside coverage
+  ---
+  duration_ms: 3.868291
+  type: 'test'
+  ...
+# Subtest: below coverage
+ok 34 - below coverage
+  ---
+  duration_ms: 3.665875
+  type: 'test'
+  ...
+# Subtest: predicate match
+ok 35 - predicate match
+  ---
+  duration_ms: 0.1595
+  type: 'test'
+  ...
+# Subtest: predicate mismatch
+ok 36 - predicate mismatch
+  ---
+  duration_ms: 0.149875
+  type: 'test'
+  ...
+# Subtest: predicate missing
+ok 37 - predicate missing
+  ---
+  duration_ms: 0.0665
+  type: 'test'
+  ...
+# Subtest: missing ATC
+ok 38 - missing ATC
+  ---
+  duration_ms: 4.465417
+  type: 'test'
+  ...
+# Subtest: missing tablets
+ok 39 - missing tablets
+  ---
+  duration_ms: 1.341667
+  type: 'test'
+  ...
+# Subtest: all missing
+ok 40 - all missing
+  ---
+  duration_ms: 0.322417
+  type: 'test'
+  ...
+# Subtest: unrelated ATC
+ok 41 - unrelated ATC
+  ---
+  duration_ms: 0.067375
+  type: 'test'
+  ...
+# Subtest: rendered wrong dose and source
+ok 42 - rendered wrong dose and source
+  ---
+  duration_ms: 0.119458
+  type: 'test'
+  ...
+# Subtest: missing predicate field warns even if another equality mismatches
+ok 43 - missing predicate field warns even if another equality mismatches
+  ---
+  duration_ms: 0.235625
+  type: 'test'
+  ...
+# Subtest: stable severity then rule sorting
+ok 44 - stable severity then rule sorting
+  ---
+  duration_ms: 0.097792
+  type: 'test'
+  ...
+# (node:7587) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: projection uses seq, timestamps and permanent retirement including correction chains
+ok 45 - projection uses seq, timestamps and permanent retirement including correction chains
+  ---
+  duration_ms: 3.315875
+  type: 'test'
+  ...
+# Subtest: invalid events and correction targets rejected
+ok 46 - invalid events and correction targets rejected
+  ---
+  duration_ms: 0.79575
+  type: 'test'
+  ...
+# Subtest: transaction rolls back partial writes
+ok 47 - transaction rolls back partial writes
+  ---
+  duration_ms: 1.798375
+  type: 'test'
+  ...
+# Subtest: ISO dates validated without clock reads
+ok 48 - ISO dates validated without clock reads
+  ---
+  duration_ms: 0.1615
+  type: 'test'
+  ...
+# (node:7588) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: gate refuses al-dose-weight-band without positive
+ok 49 - gate refuses al-dose-weight-band without positive
+  ---
+  duration_ms: 3.568042
+  type: 'test'
+  ...
+# Subtest: gate refuses al-dose-weight-band without negative
+ok 50 - gate refuses al-dose-weight-band without negative
+  ---
+  duration_ms: 0.478792
+  type: 'test'
+  ...
+# Subtest: gate refuses drugx-pregnancy without positive
+ok 51 - gate refuses drugx-pregnancy without positive
+  ---
+  duration_ms: 0.977541
+  type: 'test'
+  ...
+# Subtest: gate refuses drugx-pregnancy without negative
+ok 52 - gate refuses drugx-pregnancy without negative
+  ---
+  duration_ms: 0.687208
+  type: 'test'
+  ...
+# Subtest: fixture expectations must actually match
+ok 53 - fixture expectations must actually match
+  ---
+  duration_ms: 0.21975
+  type: 'test'
+  ...
+# Subtest: unrelated ATC cannot satisfy negative gate
+ok 54 - unrelated ATC cannot satisfy negative gate
+  ---
+  duration_ms: 0.154167
+  type: 'test'
+  ...
+# (node:7589) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: test/helpers.js
+ok 7 - test/helpers.js
+  ---
+  duration_ms: 177.912458
+  type: 'test'
+  ...
+# (node:7662) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: valid placeholder IR
+ok 56 - valid placeholder IR
+  ---
+  duration_ms: 3.97525
+  type: 'test'
+  ...
+# Subtest: reject type
+ok 57 - reject type
+  ---
+  duration_ms: 0.830958
+  type: 'test'
+  ...
+# Subtest: reject status
+ok 58 - reject status
+  ---
+  duration_ms: 0.273042
+  type: 'test'
+  ...
+# Subtest: reject risk
+ok 59 - reject risk
+  ---
+  duration_ms: 0.796041
+  type: 'test'
+  ...
+# Subtest: reject severity
+ok 60 - reject severity
+  ---
+  duration_ms: 0.182334
+  type: 'test'
+  ...
+# Subtest: reject top
+ok 61 - reject top
+  ---
+  duration_ms: 0.303042
+  type: 'test'
+  ...
+# Subtest: reject node
+ok 62 - reject node
+  ---
+  duration_ms: 1.138667
+  type: 'test'
+  ...
+# Subtest: reject nested
+ok 63 - reject nested
+  ---
+  duration_ms: 0.451333
+  type: 'test'
+  ...
+# Subtest: reject page
+ok 64 - reject page
+  ---
+  duration_ms: 0.596041
+  type: 'test'
+  ...
+# Subtest: reject bbox
+ok 65 - reject bbox
+  ---
+  duration_ms: 1.654917
+  type: 'test'
+  ...
+# Subtest: reject text
+ok 66 - reject text
+  ---
+  duration_ms: 0.438
+  type: 'test'
+  ...
+# Subtest: reject duplicate
+ok 67 - reject duplicate
+  ---
+  duration_ms: 0.150416
+  type: 'test'
+  ...
+# Subtest: reject reviewers
+ok 68 - reject reviewers
+  ---
+  duration_ms: 0.460125
+  type: 'test'
+  ...
+# Subtest: reject duplicateReviewers
+ok 69 - reject duplicateReviewers
+  ---
+  duration_ms: 0.545667
+  type: 'test'
+  ...
+# Subtest: reject overlap
+ok 70 - reject overlap
+  ---
+  duration_ms: 0.484583
+  type: 'test'
+  ...
+# Subtest: reject gap
+ok 71 - reject gap
+  ---
+  duration_ms: 0.345042
+  type: 'test'
+  ...
+# Subtest: reject edgeOverlap
+ok 72 - reject edgeOverlap
+  ---
+  duration_ms: 0.31075
+  type: 'test'
+  ...
+# Subtest: reject edgeGap
+ok 73 - reject edgeGap
+  ---
+  duration_ms: 0.382667
+  type: 'test'
+  ...
+# Subtest: reject missingEnum
+ok 74 - reject missingEnum
+  ---
+  duration_ms: 0.516708
+  type: 'test'
+  ...
+# Subtest: reject noBandEnum
+ok 75 - reject noBandEnum
+  ---
+  duration_ms: 1.510459
+  type: 'test'
+  ...
+# Subtest: reject condition
+ok 76 - reject condition
+  ---
+  duration_ms: 0.415125
+  type: 'test'
+  ...
+# Subtest: reject endpoint
+ok 77 - reject endpoint
+  ---
+  duration_ms: 0.297459
+  type: 'test'
+  ...
+# Subtest: collect errors with node ids
+ok 78 - collect errors with node ids
+  ---
+  duration_ms: 0.377417
+  type: 'test'
+  ...
+# Subtest: inclusive left band with exclusive right lower edge is valid
+ok 79 - inclusive left band with exclusive right lower edge is valid
+  ---
+  duration_ms: 0.320417
+  type: 'test'
+  ...
+# (node:7663) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: valid package deeply frozen
+ok 80 - valid package deeply frozen
+  ---
+  duration_ms: 8.849583
+  type: 'test'
+  ...
+# Subtest: tampered byte rules.json
+ok 81 - tampered byte rules.json
+  ---
+  duration_ms: 3.34475
+  type: 'test'
+  ...
+# Subtest: tampered byte manifest.json
+ok 82 - tampered byte manifest.json
+  ---
+  duration_ms: 2.626375
+  type: 'test'
+  ...
+# Subtest: wrong key refused
+ok 83 - wrong key refused
+  ---
+  duration_ms: 3.69625
+  type: 'test'
+  ...
+# Subtest: signed invalid manifest field refused
+ok 84 - signed invalid manifest field refused
+  ---
+  duration_ms: 3.031166
+  type: 'test'
+  ...
+# Subtest: signed invalid manifest enum refused
+ok 85 - signed invalid manifest enum refused
+  ---
+  duration_ms: 3.689125
+  type: 'test'
+  ...
+# Subtest: signed invalid future engine refused
+ok 86 - signed invalid future engine refused
+  ---
+  duration_ms: 2.752333
+  type: 'test'
+  ...
+# Subtest: signed invalid node count refused
+ok 87 - signed invalid node count refused
+  ---
+  duration_ms: 4.665375
+  type: 'test'
+  ...
+# Subtest: signed invalid node type refused
+ok 88 - signed invalid node type refused
+  ---
+  duration_ms: 5.513958
+  type: 'test'
+  ...
+# Subtest: signed invalid node field refused
+ok 89 - signed invalid node field refused
+  ---
+  duration_ms: 11.531084
+  type: 'test'
+  ...
+# Subtest: signed invalid nested field refused
+ok 90 - signed invalid nested field refused
+  ---
+  duration_ms: 10.457584
+  type: 'test'
+  ...
+# Subtest: signed invalid severity refused
+ok 91 - signed invalid severity refused
+  ---
+  duration_ms: 6.273292
+  type: 'test'
+  ...
+# Subtest: numeric semver comparison
+ok 92 - numeric semver comparison
+  ---
+  duration_ms: 0.407959
+  type: 'test'
+  ...
+# (node:7664) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: mock fixture lookup is explicit and idempotent without interpreting uploaded bytes
+ok 93 - mock fixture lookup is explicit and idempotent without interpreting uploaded bytes
+  ---
+  duration_ms: 14.155208
+  type: 'test'
+  ...
+# Subtest: manual path fully stores blocks and refuses replacement and unknown fields
+ok 94 - manual path fully stores blocks and refuses replacement and unknown fields
+  ---
+  duration_ms: 8.987084
+  type: 'test'
+  ...
+# (node:7665) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: deterministic drafts parse only supported cells, preserve provenance and remain high-risk placeholders
+ok 95 - deterministic drafts parse only supported cells, preserve provenance and remain high-risk placeholders
+  ---
+  duration_ms: 1.497833
+  type: 'test'
+  ...
+# Subtest: bad cells carry parse errors; unknown paragraph is not invented
+ok 96 - bad cells carry parse errors; unknown paragraph is not invented
+  ---
+  duration_ms: 0.406459
+  type: 'test'
+  ...
+# Subtest: pregnancy recogniser copies human-authored predicate and refuses qualification without review
+ok 97 - pregnancy recogniser copies human-authored predicate and refuses qualification without review
+  ---
+  duration_ms: 0.248666
+  type: 'test'
+  ...
+# Subtest: draft generation persists revisions and never overwrites existing drafts
+ok 98 - draft generation persists revisions and never overwrites existing drafts
+  ---
+  duration_ms: 13.632292
+  type: 'test'
+  ...
+# (node:7666) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: HTTP upload through mock digitisation, draft, review, fixtures, release and EMR
+ok 99 - HTTP upload through mock digitisation, draft, review, fixtures, release and EMR
+  ---
+  duration_ms: 186.794958
+  type: 'test'
+  ...
+# Subtest: unknown PDF supports complete manual-block path and rejects unparseable release
+ok 100 - unknown PDF supports complete manual-block path and rejects unparseable release
+  ---
+  duration_ms: 81.490583
+  type: 'test'
+  ...
+# (node:7667) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: EMR API records prescriptions, visible advice, dated observations and exact replay
+ok 101 - EMR API records prescriptions, visible advice, dated observations and exact replay
+  ---
+  duration_ms: 213.748667
+  type: 'test'
+  ...
+# (node:7668) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: authored gate required independently of generated boundaries and stale content rejected
+ok 102 - authored gate required independently of generated boundaries and stale content rejected
+  ---
+  duration_ms: 19.296125
+  type: 'test'
+  ...
+# Subtest: fixture unknown fields and expectations refused
+ok 103 - fixture unknown fields and expectations refused
+  ---
+  duration_ms: 12.83325
+  type: 'test'
+  ...
+# (node:7669) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: release refuses unapproved, missing fixtures, parse errors; succeeds only with reviewed package
+ok 104 - release refuses unapproved, missing fixtures, parse errors; succeeds only with reviewed package
+  ---
+  duration_ms: 54.62
+  type: 'test'
+  ...
+# Subtest: source metadata and unknown release fields fail closed
+ok 105 - source metadata and unknown release fields fail closed
+  ---
+  duration_ms: 21.29325
+  type: 'test'
+  ...
+# (node:7670) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: two distinct reviewers approve same hash; duplicate is idempotent
+ok 106 - two distinct reviewers approve same hash; duplicate is idempotent
+  ---
+  duration_ms: 24.829125
+  type: 'test'
+  ...
+# Subtest: edits preserve history with hashes and reset approvals even when submitted by previous approver
+ok 107 - edits preserve history with hashes and reset approvals even when submitted by previous approver
+  ---
+  duration_ms: 25.896709
+  type: 'test'
+  ...
+# Subtest: rejection resets approvals, records reason, and parse errors cannot be approved
+ok 108 - rejection resets approvals, records reason, and parse errors cannot be approved
+  ---
+  duration_ms: 20.876125
+  type: 'test'
+  ...
+# (node:7671) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: shipped bundle is exact and entire service flow works without HTTP
+ok 109 - shipped bundle is exact and entire service flow works without HTTP
+  ---
+  duration_ms: 73.727917
+  type: 'test'
+  ...
+# (node:7672) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: non-loopback binding refused
+ok 110 - non-loopback binding refused
+  ---
+  duration_ms: 2.092292
+  type: 'test'
+  ...
+# Subtest: traversal, unknown query fields, cross-origin and private key routes refused
+ok 111 - traversal, unknown query fields, cross-origin and private key routes refused
+  ---
+  duration_ms: 97.722083
+  type: 'test'
+  ...
+# Subtest: HTTP upload rejects oversized and non-PDF requests before registry mutation
+ok 112 - HTTP upload rejects oversized and non-PDF requests before registry mutation
+  ---
+  duration_ms: 49.345125
+  type: 'test'
+  ...
+# (node:7673) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: test/prototype/support.js
+ok 19 - test/prototype/support.js
+  ---
+  duration_ms: 94.476917
+  type: 'test'
+  ...
+# (node:7674) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: all front-end pages and modules are allowlisted, labelled and served with CSP
+ok 114 - all front-end pages and modules are allowlisted, labelled and served with CSP
+  ---
+  duration_ms: 88.342375
+  type: 'test'
+  ...
+# (node:7675) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: registry rejects non PDF and oversized bodies
+ok 115 - registry rejects non PDF and oversized bodies
+  ---
+  duration_ms: 14.492833
+  type: 'test'
+  ...
+# Subtest: hash upload idempotence, actual bytes, metadata gate and unknown fields
+ok 116 - hash upload idempotence, actual bytes, metadata gate and unknown fields
+  ---
+  duration_ms: 16.049916
+  type: 'test'
+  ...
+# Subtest: evaluator has only approved imports and no ambient side effects
+ok 117 - evaluator has only approved imports and no ambient side effects
+  ---
+  duration_ms: 0.771667
+  type: 'test'
+  ...
+# (node:7677) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: replay exact package and predecessor context despite later corrections
+ok 118 - replay exact package and predecessor context despite later corrections
+  ---
+  duration_ms: 18.287334
+  type: 'test'
+  ...
+# (node:7678) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: register observe prescribe warning then correction and no advice
+ok 119 - register observe prescribe warning then correction and no advice
+  ---
+  duration_ms: 16.241166
+  type: 'test'
+  ...
+# Subtest: missing weight and proposal inputs visibly warn; block still records prescription
+ok 120 - missing weight and proposal inputs visibly warn; block still records prescription
+  ---
+  duration_ms: 11.081958
+  type: 'test'
+  ...
+# Subtest: invalid or untrusted prescription leaves no partial events
+ok 121 - invalid or untrusted prescription leaves no partial events
+  ---
+  duration_ms: 5.9855
+  type: 'test'
+  ...
+# Subtest: CLI block exit code and missing weight warning
+ok 122 - CLI block exit code and missing weight warning
+  ---
+  duration_ms: 156.522917
+  type: 'test'
+  ...
+# Subtest: override responses require reason and same-patient advice reference
+ok 123 - override responses require reason and same-patient advice reference
+  ---
+  duration_ms: 6.049208
+  type: 'test'
+  ...
+1..123
+# tests 123
+# suites 0
+# pass 123
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 788.535292

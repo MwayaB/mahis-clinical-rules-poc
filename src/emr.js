@@ -18,8 +18,14 @@ export function patientContext(store,db,id,{now}) {return buildContext(patientEv
 export function recordObservation(store,db,id,body,{now}) {getPatient(store,id);exact(body,['field','value','supersedes'],['field','value']);return workflow.observe({...args(db,id,now),...body});}
 export function recordStatus(store,db,id,body,{now}) {getPatient(store,id);exact(body,['field','value','supersedes'],['field','value']);return workflow.status({...args(db,id,now),...body});}
 export function recordDiagnosis(store,db,id,body,{now}) {getPatient(store,id);exact(body,['icd10','label','certainty'],['icd10','label']);return workflow.diagnose({...args(db,id,now),...body});}
+export function patientDiagnoses(store,db,id) {
+ const events=patientEvents(store,db,id),retired=new Set(events.map(e=>e.payload.supersedes).filter(Boolean));
+ return events.filter(e=>e.type==='diagnosis-recorded'&&!retired.has(e.event_id)).map(e=>({event_id:e.event_id,icd10:e.payload.icd10,label:e.payload.label,certainty:e.payload.certainty,recorded_at:e.occurred_at}));
+}
 export function checkPrescription(store,db,id,body,{now,keyDir}) {
- getPatient(store,id);exact(body,['atc','tablets','release_version'],['release_version']);getRelease(store,body.release_version);loadRelease(store,body.release_version,{keyDir});
+ getPatient(store,id);exact(body,['atc','tablets','release_version'],['release_version']);
+ if(!patientDiagnoses(store,db,id).length) throw new ApiError('Record a diagnosis with an ICD-10 code and label before checking a prescription',409);
+ getRelease(store,body.release_version);loadRelease(store,body.release_version,{keyDir});
  return workflow.prescribe({...args(db,id,now),atc:body.atc??null,tablets:body.tablets??null,packageDir:join(store.root,'releases',body.release_version),trustedPublicKeys:[join(keyDir,'dev-public.pem')],eventIds:{prescription:randomUUID(),advice:randomUUID()}});
 }
 export function replayAdvice(store,db,seq,{keyDir}) {

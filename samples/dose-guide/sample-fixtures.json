@@ -1,0 +1,54 @@
+{
+  "b1": [
+    {
+      "name": "PLACEHOLDER positive b1",
+      "ctx": {
+        "today": "2026-01-01",
+        "weight_kg": 12,
+        "pregnant": false,
+        "proposed_atc": "P01BF01",
+        "proposed_tablets": 2
+      },
+      "expect": [
+        "fec02b46aa10b8bd7474c28cdd0bcc0b6553b161c36def58f973b9ecf32e871b-b1"
+      ]
+    },
+    {
+      "name": "PLACEHOLDER negative b1",
+      "ctx": {
+        "today": "2026-01-01",
+        "weight_kg": 12,
+        "pregnant": false,
+        "proposed_atc": "P01BF01",
+        "proposed_tablets": 1
+      },
+      "expect": []
+    }
+  ],
+  "b2": [
+    {
+      "name": "PLACEHOLDER positive b2",
+      "ctx": {
+        "today": "2026-01-01",
+        "weight_kg": 12,
+        "pregnant": true,
+        "proposed_atc": "J01XX01",
+        "proposed_tablets": 2
+      },
+      "expect": [
+        "fec02b46aa10b8bd7474c28cdd0bcc0b6553b161c36def58f973b9ecf32e871b-b2"
+      ]
+    },
+    {
+      "name": "PLACEHOLDER negative b2",
+      "ctx": {
+        "today": "2026-01-01",
+        "weight_kg": 12,
+        "pregnant": false,
+        "proposed_atc": "J01XX01",
+        "proposed_tablets": 2
+      },
+      "expect": []
+    }
+  ]
+}

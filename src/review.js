@@ -22,7 +22,7 @@ export function editNode(store,id,body,{actor,now}) {
  return store.transaction(()=>save(store,current,node,[],'edited',actor,now));
 }
 export function approveNode(store,id,body,{now}) {
- exact(body,['reviewer']);const reviewer=text(body.reviewer,'reviewer'),current=getNode(store,id);
+ exact(body,['reviewer']);const reviewer=text(body.reviewer,'reviewer').trim(),current=getNode(store,id);
  const errors=nodeErrors(current.node);if(errors.length) throw new ApiError(`${id}: cannot approve: ${errors.join('; ')}`,409);
  if(current.approvals.some(a=>a.reviewer===reviewer&&a.content_hash===current.content_hash)) return current;
  const approvals=[...current.approvals,{reviewer,content_hash:current.content_hash,approved_at:timestamp(now)}];
