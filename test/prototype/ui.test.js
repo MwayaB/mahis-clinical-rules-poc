@@ -1,0 +1,5 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { httpEnvironment } from './support.js';
+import { readFileSync } from 'node:fs';
+test('all front-end pages and modules are allowlisted, labelled and served with CSP',async t=>{const s=await httpEnvironment(t);for(const name of ['guidelines','digitise','review','emr']) {const r=await fetch(s.app.url+'/'+name+'.html'+(name==='review'?'?document='+'a'.repeat(64):''));assert.equal(r.status,200);assert.match(r.headers.get('content-security-policy'),/script-src 'self'/);const html=await r.text();assert.match(html,/<html lang="en">/);assert.match(html,/Not clinical guidance/);assert.match(html,/role="alert"/);assert.equal((await fetch(s.app.url+'/'+name+'.js')).status,200);}assert.equal((await fetch(s.app.url+'/style.css')).status,200);const emr=readFileSync(new URL('../../public/emr.js',import.meta.url),'utf8');assert.ok(!/\.bands|\.when|function evaluate|weight_kg\s*[<>]/.test(emr));assert.ok(!emr.includes('innerHTML'));});

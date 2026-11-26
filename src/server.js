@@ -10,7 +10,7 @@ import * as review from './review.js';
 import * as fixtures from './fixtures.js';
 import * as releases from './release.js';
 import * as emr from './emr.js';
-const staticFiles={'/':'guidelines.html','/guidelines.html':'guidelines.html','/digitise.html':'digitise.html','/review.html':'review.html','/emr.html':'emr.html','/style.css':'style.css','/common.js':'common.js','/guidelines.js':'guidelines.js','/digitise.js':'digitise.js','/review.js':'review.js','/emr.js':'emr.js'};
+const staticFiles={'/':'guidelines.html','/guidelines.html':'guidelines.html','/digitise.html':'digitise.html','/review.html':'review.html','/emr.html':'emr.html','/style.css':'style.css','/common.js':'common.js','/guidelines.js':'guidelines.js','/digitise.js':'digitise.js','/review.js':'review.js','/emr.js':'emr.js','/samples/dose-guide/placeholder.pdf':'../samples/dose-guide/placeholder.pdf'};
 function readBody(req,max) {
  return new Promise((done,fail)=>{
   let size=0,chunks=[],failed=false;
@@ -42,7 +42,7 @@ export async function startServer({host='127.0.0.1',port=8080,dataDir=new URL('.
    const who=()=>req.headers['x-user']??'local-user';const meta=()=>({actor:who(),now:clock(),keyDir});
    let match;
    if(method==='GET'&&staticFiles[path]) {
-    const file=staticFiles[path],ext=file.split('.').at(-1),types={html:'text/html',css:'text/css',js:'text/javascript'};
+    const file=staticFiles[path],ext=file.split('.').at(-1),types={html:'text/html',css:'text/css',js:'text/javascript',pdf:'application/pdf'};
     const bytes=readFileSync(join(resolve(publicDir),file));res.writeHead(200,{'Content-Type':types[ext]+'; charset=utf-8'});res.end(bytes);return;
    }
    if(path==='/api/guidelines'&&method==='GET') return send(200,registry.listSources(store));
