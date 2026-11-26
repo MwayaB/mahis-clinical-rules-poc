@@ -20,7 +20,7 @@ for(const entry of draft.nodes) {
  for(const reviewer of ['placeholder-reviewer-a','placeholder-reviewer-b']) call(`/api/ir/${entry.node.id}/approve`,{reviewer});
  call('/api/fixtures',{node_id:entry.node.id,entries:sample.fixtures[entry.block.id]});
 }
-const version='poc-demo-0.1.0',existing=call('/api/releases').find(r=>r.version===version);
+const version=sample.release_version,existing=call('/api/releases').find(r=>r.version===version);
 if(existing) {assert.equal(existing.document_sha256,sample.document_sha256);console.log('Keeping existing append-only sample release '+version);} else call('/api/releases',{document_sha256:sample.document_sha256,version});
 const p=call('/api/patients',{name:'PLACEHOLDER child',sex:'M',age_years:4}),patient='/api/patients/'+p.patient_id;
 call(patient+'/observations',{field:'weight_kg',value:15});

@@ -22,7 +22,8 @@ export function fixtureGate(rules,fixtures,terminology=defaultTerminology) {
   if(canonicalStringify(actual)!==canonicalStringify([...f.expect].sort())) throw new Error('Fixture mismatch '+f.name+': '+rules.map(n=>n.id).join(', '));
   for(const n of rules) if(f.ctx.proposed_atc===n.applies_to.atc) {
    const a=n.applies_to;
-   if(a.sex&&f.ctx.sex!==a.sex||a.age_years&&(f.ctx.age_years==null||f.ctx.age_years<a.age_years.min||f.ctx.age_years>a.age_years.max)||a.icd10&&!(f.ctx.active_diagnoses??[]).some(d=>['confirmed','presumptive'].includes(d.certainty)&&d.icd10.startsWith(a.icd10))) continue;
+   if(a.sex&&f.ctx.sex!==a.sex||a.age_years&&(f.ctx.age_years==null||f.ctx.age_years<a.age_years.min||f.ctx.age_years>a.age_years.max)||a.icd10&&!(f.ctx.active_diagnoses??[]).some(d=>['confirmed','presumptive'].includes(d.certainty)&&d.terminology_version===terminology.terminology_version&&d.icd10.startsWith(a.icd10))) continue;
+   if(f.ctx.terminology_changed) continue;
    // Missing inputs and unrelated ATCs do not establish a clinical positive or negative.
    const required=n.type==='table'?[n.input,'proposed_tablets']:Object.keys(n.when);
    if(required.every(k=>f.ctx[k]!==null&&f.ctx[k]!==undefined)) counts.get(n.id)[f.expect.includes(n.id)?'positive':'negative']++;
