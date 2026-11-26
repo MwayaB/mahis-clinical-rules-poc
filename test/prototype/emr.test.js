@@ -17,3 +17,12 @@ test('EMR API records prescriptions, visible advice, dated observations and exac
  // Exercise module APIs directly as well as HTTP wrappers.
  const meta={now:'2026-01-02T00:00:00.000Z'};emr.recordDiagnosis(s.app.store,s.app.events,p.patient_id,{icd10:'R50.9',label:'PLACEHOLDER diagnosis'},meta);assert.ok(emr.listPatients(s.app.store).length);assert.equal(emr.patientEvents(s.app.store,s.app.events,p.patient_id).at(-1).type,'diagnosis-recorded');
 });
+test('prescription entry rejects an ATC label instead of silently missing the pregnancy rule',async t=>{
+ const s=await httpEnvironment(t);await releasedHTTP(s);
+ const p=await s.ok('/api/patients',{name:'PLACEHOLDER adult',sex:'F',age_years:23}),base='/api/patients/'+p.patient_id;
+ await s.ok(base+'/status',{field:'pregnant',value:true});
+ const rx={atc:'ATC J01XX01',tablets:2,release_version:'poc-demo-0.1.0'},before=await s.ok(base+'/events');
+ for(const atc of [rx.atc,' J01XX01','J01XX01 ','j01xx01',23]) {const r=await s.request(base+'/prescriptions/check',{...rx,atc});assert.equal(r.status,422);assert.match(r.data.error,/atc.*omit the ATC label and spaces/);}
+ assert.deepEqual(await s.ok(base+'/events'),before);
+ const valid=await s.ok(base+'/prescriptions/check',{...rx,atc:'J01XX01'});assert.equal(valid.result.advice[0].severity,'block');assert.equal(valid.exitCode,2);
+});

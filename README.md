@@ -1,4 +1,26 @@
-# End-to-end local clinical rules prototype
+# Shared clinical guideline rules for MaHIS
+
+A proof of concept for authoring, reviewing and packaging clinical rules once, with a common evaluator that programme systems could consume.
+
+## Problem statement
+
+Malawi's national clinical guidelines are shared across programmes. Antiretroviral therapy, tuberculosis, antenatal care, immunisation, child health and non-communicable disease care all draw on common rules for dosing, contraindications, triage and follow-up. In practice, each programme encodes these rules separately, in its own system, from its own reading of the guideline document. The same weight-band dose table can exist in several places, each maintained by a different team, and each updated on a different schedule.
+
+The *Concept of MaHIS* describes programme-specific systems as the historical pattern. The HIV ART electronic data capture system, first piloted by implementing partners, became a point-of-care record in 2012, and programme modules have grown around it. The concept's business-logic layer calls for guidelines, protocols and procedures to be “strictly adhered to”, but it does not say where that logic lives, who owns it, or how it reaches each programme. The result is that the same clinical rule can be correct in one programme, out of date in another, and undetectable as a discrepancy because no one compares them.
+
+This produces three problems for the Ministry:
+
+1. **Duplicated effort.** Each programme pays to re-author and re-test rules that another programme already has, and does so in different tools.
+2. **Divergence.** When a guideline changes, updates reach programmes at different times, or not at all. Two patients with the same weight and diagnosis can receive different advice depending on which programme they are registered in.
+3. **No single record of what the rule was.** When advice is questioned, there is usually no way to establish which version of a rule produced it, who approved that version, or whether other programmes were using the same one.
+
+This project asks whether guideline rules for MaHIS can be authored and reviewed once, compiled into signed and versioned packages, and consumed by each programme and each facility node through the same evaluator, so that a rule change is made once, propagates to every programme, and leaves an auditable trail.
+
+## Proof-of-concept scope
+
+The proof of concept demonstrates two rule types—weight-based dosing and pregnancy contraindications—with placeholder values and one simulated EMR screen. It implements reviewed rule authoring, signed and versioned packages, deterministic evaluation, and recorded advice that can be replayed against the exact package used.
+
+It does not demonstrate integration with existing programme systems, extraction from real guideline PDFs, triage, clinical validation, Ministry governance, or distribution to facility nodes. Those remain future work. The architecture separates authoring, compilation and evaluation to accommodate those extensions; compatibility with real programme systems has not been established.
 
 **Every clinical value, patient, drug code, diagnosis label and expected clinical outcome is a PLACEHOLDER, NOT CLINICAL GUIDANCE.** Digitisation is a mock; uploaded PDFs are stored and hashed, never read or interpreted. This is a local demonstration with no authentication or clinical validation.
 
@@ -7,8 +29,7 @@
 Use Node >=22 with built-in `node:sqlite`, plus `curl` for the demo. There are no npm dependencies, frameworks or build tools.
 
 ```sh
-# On the development machine, select the verified Node installation:
-export PATH=/Users/Mwaya/.nvm/versions/node/v22.18.0/bin:$PATH
+# Use Node.js 22 or later with node:sqlite support.
 npm test
 bash scripts/prototype-demo.sh
 ```
@@ -83,14 +104,14 @@ All JSON mutation bodies use `Content-Type: application/json`. Digitise and repl
 
 ## Prototype Decisions
 
-- The prompt's ban on generating clinical rules and its required rule-based drafting are interpreted together: code only parses explicitly typed numerical bands and recognises the specified pregnancy prefix; all message templates, units and predicate content come from the existing human-authored placeholder IRs. No new recommendations are invented. The shipped mock blocks exactly match the regenerated guideline PDF and its source.json; they are still a fixture lookup, not OCR. Explicit source annotations supply applicability, never inherited template indications.
+- Drafting is deliberately constrained: code only parses explicitly typed numerical bands and recognises the specified pregnancy prefix; all message templates, units and predicate content come from the existing human-authored placeholder IRs. No new recommendations are invented. The shipped mock blocks exactly match the regenerated guideline PDF and its source.json; they are still a fixture lookup, not OCR. Explicit source annotations supply applicability, never inherited template indications.
 - Drafts may carry transient `parse_errors` and empty reviewers, so they live in the draft store rather than weakening the approved IR validator. Approval validates a clean candidate with synthetic validation-only reviewer slots; real stored approvals still require two distinct supplied IDs on the actual content hash. Parse errors must first be corrected through an explicit edit.
 - Qualified pregnancy text, including “first trimester”, is not silently converted to an all-pregnancy rule. It carries parse errors requiring explicit reviewer editing. The shipped sample states its sex and inclusive age range explicitly. No trimester inference is performed.
 - The dose and pregnancy demonstrations use separate patients. The dose patient's numeric value is always labelled kg; pregnancy is shown only on an explicitly adult-labelled placeholder. An early local demo mistakenly reused a child-labelled patient; its status was corrected with a superseding event, preserving history. The shipped script does not reproduce that setup.
 - The earlier diagnosis-presence gate was removed: missing indications must produce visible advice and retain the prescription. Workflow and event entry validate exact terminology membership, canonical labels and version metadata. Applicability and indication selection belong to the evaluator.
 - Metadata is set separately after upload. Identical bytes retain the first registry identity; conflicting later editions are refused. Source status remains `metadata-set` while later-stage history is stored separately. Hashes are lowercase 64-character hex; filenames are labels only and never determine disk paths.
 - Digitisation is available only after metadata. There is exactly one shipped lookup fixture. Mock reruns return existing mock rows; manual blocks have `digitiser: manual`. Block IDs are immutable within a source; conflicts are refused rather than replaced. Uploaded bytes are never used as code, extracted as text, or served through arbitrary paths.
-- Drafting is an explicit additional endpoint because the requested API summary did not name one. Node IDs include the complete source checksum and block ID to avoid collisions. Repeat drafting preserves reviewed nodes. Unconverted blocks conservatively block release; there is no general raw-node editor or reviewed-exclusion flow for unsupported text in this scope.
+- Drafting has a separate endpoint from digitisation. Node IDs include the complete source checksum and block ID to avoid collisions. Repeat drafting preserves reviewed nodes. Unconverted blocks conservatively block release; there is no general raw-node editor or reviewed-exclusion flow for unsupported text in this scope.
 - Editable table fields include `bands`, `coverage`, `message_template`, `applies_to`; predicate fields are `when`, `severity`, `message`, `applies_to`. Coverage is recomputed from edited band extrema unless supplied explicitly, then the original validator checks intervals. Source provenance, node identity, risk, placeholder flag and approvals cannot be changed by an edit request. A valid explicit edit clears parser errors; invalid edits retain visible validation errors.
 - Content hashes exclude mutable status/reviewer lists. Approvals are stored with reviewer, timestamp and exact content hash; reviewer strings are trimmed and otherwise case-sensitive. Duplicate approval is idempotent. Every save, including an identical save, resets approvals and appends an edit event. Reject resets approvals and records a separate append-only reason snapshot. IDs remain audit labels; this is not authentication or proof of independent reviewers.
 - Fixtures are bound to the content hash when saved. They may be authored before final approval but become stale after content changes. Positive/negative coverage must come from authored cases; automatically generated boundaries cannot bypass this gate. Boundaries use an independent endpoint-membership/equality oracle and are included in the compiler gate across the complete document. Cross-rule cases must list all expected rule IDs when multiple rules share an ATC.
@@ -99,7 +120,7 @@ All JSON mutation bodies use `Content-Type: application/json`. Digitise and repl
 - Patients are indexed separately from the event log; registration updates two local stores synchronously and is not a crash-atomic distributed transaction. Each prescription/advice pair retains the original single-database transaction. New prerequisites or invalid requests create no prescription. Block advice records the proposal exactly as before.
 - Additional read endpoints for source history, sample suggestions, diagnosis lists and patient context support the UI without placing rules in the browser. Static serving is an exact allowlist, including only the shipped sample PDF. Same-origin checks, strict content types, bounded bodies, safe text-node rendering and CSP limit accidental browser exposure; they are not an authentication system.
 - The browser uses semantic forms, associated visible labels, native validation, keyboard focus indicators, explicit missing badges and live error/status feedback. No HTML injection, inline handlers, external assets or clinical condition logic is used. Because this is a local JavaScript/JSON prototype, form submissions require JavaScript; the API and original CLI are the documented fallback rather than a separate server-rendered HTML form system.
-- The demo's default data path is `data/prototype-demo` to keep it separate from a fresh `npm start` workspace. Its OS opener is best-effort, but the URLs are always printed. In this agent environment background jobs may be cleaned up with their launching command, so the final demo server is retained in an active execution session for the user.
+- The demo's default data path is `data/prototype-demo` to keep it separate from a fresh `npm start` workspace. Its OS opener is best-effort, but the URLs are always printed. Run the demo from a terminal session that permits the server process to remain running.
 
 ## Stage limitations and deviations
 
@@ -107,15 +128,15 @@ All JSON mutation bodies use `Content-Type: application/json`. Digitise and repl
 | --- | --- |
 | Upload | No real authentication, PDF parsing, document truth/provenance verification or file preview; `%PDF-` is only a format gate. |
 | Digitisation | No OCR, layout analysis or extraction. Manual entry accepts human-authored blocks; it does not understand a document. |
-| Draft/review | No LLM, inferred ATC, trimester/age modelling, reviewer authentication, raw-node authoring for unknown text, or clinical validation. Unsupported/qualified content is refused conservatively. |
+| Draft/review | No LLM, inferred ATC, trimester modelling, date-of-birth ageing, reviewer authentication, raw-node authoring for unknown text, or clinical validation. Unsupported/qualified content is refused conservatively. |
 | Fixtures/release | No clinical oracle, production key custody, key rotation, remote distribution, automatic approval or release overwrite. Historical keys and packages must remain available for replay. |
-| EMR | No ICD terminology catalogue, drug–diagnosis compatibility validation, real patient use, age model, FHIR, CDS Hooks, sync or multi-user concurrency. Coded diagnosis is a workflow prerequisite, not proof of clinical appropriateness. |
+| EMR | Only a placeholder ICD-10 subset and explicitly authored indication matching; no comprehensive terminology service, clinical appropriateness validation, real patient use, date-of-birth ageing, FHIR, CDS Hooks, sync or multi-user concurrency. Missing indications warn without preventing prescription recording. |
 
-The conservative unsupported-block release gate and qualified-pregnancy refusal are stricter than the prompt's minimum behavior. No requested feature is represented as real extraction or clinically verified decision support. See [PROTOTYPE-VALIDATION.md](PROTOTYPE-VALIDATION.md) for tests and the recorded demo results. The original core documentation follows.
+Unsupported source blocks prevent release, and qualified pregnancy statements require manual review. The prototype does not claim real extraction or clinically verified decision support. See [PROTOTYPE-VALIDATION.md](PROTOTYPE-VALIDATION.md) for tests and the recorded demo results. The original core documentation follows.
 
 ---
 
-# Clinical rules pipeline proof of concept
+## Core pipeline reference
 
 **Every clinical value, drug code, band, pregnancy statement, message, source excerpt, diagnosis, patient and reviewer identity in the examples is a placeholder, not clinical guidance.** Each example source IR node is marked `"placeholder": true`. The source checksums are placeholder zero hashes, not attestations of real documents. This repository demonstrates software behavior; it is not validated for clinical use.
 
@@ -130,13 +151,7 @@ npm test
 bash scripts/demo.sh
 ```
 
-On the development machine the default Node was v18.12.1. All successful tests and demo runs explicitly selected installed v22.18.0:
-
-```sh
-export PATH=/Users/Mwaya/.nvm/versions/node/v22.18.0/bin:$PATH
-```
-
-Use the equivalent Node selection on another machine. No SQLite substitute is used. `demo.sh` checks the runtime, generates or retains development keys, compiles the placeholder dose IR, registers a placeholder child, records 12 kg and 2 tablets (warning), then records 10 kg and 1 tablet (no advice). It asserts both outcomes, prints ordered events from SQLite, and removes its temporary database and package. Generated private keys remain under ignored `keys/` with mode 0600.
+Select Node.js 22 or later using your preferred version manager. No SQLite substitute is used. `demo.sh` compiles a temporary package and demonstrates a child aged 4 years at 15 kg: a warning before diagnosis, dose advice after a confirmed malaria diagnosis, and no advice after dose correction. A separate adult female scenario demonstrates pregnancy advice. The script asserts the outcomes and removes its temporary database, package and signing key.
 
 Compile either example independently:
 
@@ -193,14 +208,14 @@ CLI commands take `--db FILE --patient-id ID` plus the following arguments:
 - **Correction semantics:** seq order determines the latest value, irrespective of `occurred_at`; that timestamp is retained for each input. Every superseded target in the selected history remains retired, including correction chains. Only earlier events of the same patient, event type and field may be superseded. Forward references and cross-patient corrections are rejected. Re-evaluate a cutoff using only supersessions present at that cutoff.
 - **Prescription context:** evaluation includes the newly drafted prescription; older proposals cannot supply a missing value for the new proposal. Draft and advice are one SQLite transaction, including block cases. Registration is required for workflow writes. Direct event-log append supports importing valid events without that workflow prerequisite.
 - **Replay audit extensions:** the specified advice payload lacks sufficient details to pin the exact package or compare rendered advice. Add `today`, `context_up_to_seq`, `rules_sha256`, `manifest_sha256` and full `advice`. The cutoff is the last patient event before advice (the new draft); unrelated patients' intervening seq values do not matter. Replay uses recorded today, exact verified package fingerprint and cutoff, then checks the input hash and full advice. Later observations/corrections cannot alter replay. The caller must retain and supply the historical signed package and trusted key; there is no package archive service.
-- **Event values:** accept UTC ISO timestamps with seconds and optional three-digit milliseconds. Validate calendar dates without reading a clock. Sex is `F`, `M` or `U`; diagnosis certainty defaults explicitly to `suspected` and also permits `confirmed`. Override responses require a nonempty reason; advice responses must reference the same patient's advice event. These are structural workflow conventions, not clinical interpretations.
+- **Event values:** accept UTC ISO timestamps with seconds and optional three-digit milliseconds. Validate calendar dates without reading a clock. Sex is `F`, `M` or `U`; diagnosis certainty defaults explicitly to `suspected` and also permits `confirmed`, `presumptive` and `ruled-out`. Override responses require a nonempty reason; advice responses must reference the same patient's advice event. These are structural workflow conventions, not clinical interpretations.
 - **Test boundary change:** move the shared edge from 15 to 14 on both adjacent bands, keeping coverage valid. Compare advice rather than result metadata between package versions. Only weights in `[14,15)` change, including the new edge and excluding the old edge. Generated boundary cases derive expectations from declared interval membership and exercise both complementary inclusion arrangements.
 
 ## Validation and limits
 
 Built and committed in the required working order: canonical JSON; IR validation; compiler; package verification; evaluator; events/context; CLI/workflow/replay; scripts/documentation. The complete suite was run after every part. The final suite and demonstration results are recorded in `VALIDATION.md`.
 
-No requested implementation requirement is intentionally left unmet. Qualification: inclusive maximum coverage is not expressible under the documented conservative convention; source provenance cannot be authenticated without real source documents; replay requires retained historical packages. The original core has no production clinical validation, deployment, sync, LLM, FHIR support or additional rule node types. The local HTTP server and UI added in the prototype phase are described above.
+Implementation limits: inclusive maximum coverage is not expressible under the documented conservative convention; source provenance cannot be authenticated without real source documents; replay requires retained historical packages. The original core has no production clinical validation, deployment, sync, LLM, FHIR support or additional rule node types. The local HTTP server and UI added in the prototype phase are described above.
 
 ## Data-quality guards
 

@@ -270,3 +270,7 @@ PDF QA: generated and inspected the final rendered page; verified one page, all 
 | Final README/report | 155/155 | 0 |
 
 Every suite includes the unchanged evaluator purity test. Both standalone and curl-driven demos run in regression tests, including a missing-indication warning, child dose correction, adult pregnancy block and replay.
+
+## Public repository preparation
+
+The README now leads with the MaHIS problem statement, distinguishes the implemented proof of concept from future programme integration/distribution, and removes machine-specific setup paths. Sample mirror files and their documentation match the current guideline PDF and fixtures. ATC prescription entry now rejects labels such as `ATC J01XX01` with HTTP 422 rather than silently finding no rule; the exact `J01XX01` code still produces the applicable pregnancy advice. Regression coverage verifies no partial events on rejected entry. Full suite: 156 passing, zero skipped. Local databases and signing keys remain ignored and are not part of tracked history.

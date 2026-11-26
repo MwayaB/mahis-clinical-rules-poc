@@ -25,6 +25,7 @@ export function diagnose(args) {
 }
 export const respond=args=>record(args,'advice-response',{advice_ref:args.adviceRef,action:args.action,reason:args.reason??''});
 export function prescribe(args) {
+ if(args.atc!=null&&(typeof args.atc!=='string'||! /^[A-Z][0-9]{2}[A-Z]{2}[0-9]{2}$/.test(args.atc))) {const error=new Error('atc must contain only the 7-character ATC code; omit the ATC label and spaces');error.status=422;throw error;}
  const {db,today,patientId,packageDir,trustedPublicKeys,eventIds}=args;
  const pkg=applyPackage(packageDir,{trustedPublicKeys,engineVersion:'0.1.0'});
  return db.transaction(()=>{

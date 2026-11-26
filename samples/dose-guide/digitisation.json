@@ -1,6 +1,6 @@
 {
   "digitiser": "mock-fixture",
-  "document_sha256": "fec02b46aa10b8bd7474c28cdd0bcc0b6553b161c36def58f973b9ecf32e871b",
+  "document_sha256": "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497",
   "pages": [
     {
       "page": 1,
@@ -10,10 +10,11 @@
           "kind": "table",
           "bbox": [
             40,
-            120,
-            560,
-            380
+            135,
+            572,
+            310
           ],
+          "text": "Indication: malaria (ICD-10 B50), confirmed or presumptive. Drug: ATC P01BF01. Dose: use the weight table below.",
           "cells": [
             [
               "Weight (kg)",
@@ -31,19 +32,39 @@
               "25 to <35",
               "3"
             ]
-          ],
-          "text": "PLACEHOLDER weight-based dose table. All values are placeholders, not clinical guidance."
+          ]
         },
         {
           "id": "b2",
           "kind": "paragraph",
           "bbox": [
             40,
-            60,
-            560,
-            110
+            335,
+            572,
+            435
           ],
-          "text": "Pregnancy: not recommended (PLACEHOLDER text; not clinical guidance)."
+          "text": "Pregnancy: not recommended. Drug: ATC J01XX01. Patient group: women (sex F), aged 12 to 50 years inclusive."
+        },
+        {
+          "id": "b3",
+          "kind": "table",
+          "bbox": [
+            40,
+            465,
+            572,
+            620
+          ],
+          "text": "Indication: pneumonia (ICD-10 J18), confirmed or presumptive. Drug: ATC P01BF01. Dose: use the weight table below.",
+          "cells": [
+            [
+              "Weight (kg)",
+              "Tablets"
+            ],
+            [
+              "5 to <35",
+              "2"
+            ]
+          ]
         }
       ]
     }

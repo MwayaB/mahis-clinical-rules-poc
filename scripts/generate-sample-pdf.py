@@ -49,4 +49,6 @@ for fs in bundle['fixtures'].values():
 ctx={'today':'2026-01-01','weight_kg':12,'pregnant':False,'proposed_atc':'P01BF01','proposed_tablets':3,'active_diagnoses':[{'icd10':bundle['demo_diagnoses']['pneumonia']['icd10'],'certainty':'confirmed','terminology_version':'seed-placeholder-2026'}]}
 bundle['fixtures']['b3']=[{'name':'PLACEHOLDER pneumonia positive','ctx':ctx,'expect':[sha+'-b3']},{'name':'PLACEHOLDER pneumonia negative','ctx':{**ctx,'proposed_tablets':2},'expect':[]}]
 bundle_path.write_text(json.dumps(bundle,indent=2)+'\n')
+(base/'digitisation.json').write_text(json.dumps(fixture,indent=2)+'\n')
+(base/'sample-fixtures.json').write_text(json.dumps(bundle['fixtures'],indent=2)+'\n')
 print(sha)
