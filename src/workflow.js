@@ -1,3 +1,6 @@
+import { checkPregnancy } from './plausibility.js';
+import { readFileSync } from 'node:fs';
+const pregnancyRules=JSON.parse(readFileSync(new URL('../ir/contraindication_example.ir.json',import.meta.url))).nodes;
 import { buildContext } from './context.js';
 import { evaluate } from './evaluator.js';
 import { applyPackage } from './package.js';
@@ -11,7 +14,7 @@ function record(args,type,payload) {
 }
 export const register=args=>record(args,'patient-registered',{name:args.name,sex:args.sex,...(args.age_years!==undefined?{age_years:args.age_years}:{})});
 export const observe=args=>record(args,'observation-recorded',{field:args.field,value:args.value,...(args.supersedes?{supersedes:args.supersedes}:{})});
-export const status=args=>record(args,'status-recorded',{field:args.field,value:args.value,...(args.supersedes?{supersedes:args.supersedes}:{})});
+export const status=args=>{checkPregnancy(args.value,buildContext(args.db.listForPatient(args.patientId),{today:args.today}),args.rules??pregnancyRules);return record(args,'status-recorded',{field:args.field,value:args.value,...(args.supersedes?{supersedes:args.supersedes}:{})});};
 export const diagnose=args=>record(args,'diagnosis-recorded',{icd10:args.icd10,label:args.label,certainty:args.certainty??'suspected'});
 export const respond=args=>record(args,'advice-response',{advice_ref:args.adviceRef,action:args.action,reason:args.reason??''});
 export function prescribe(args) {

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { exact,text,ApiError,timestamp } from './prototype/store.js';
 import { buildContext } from './context.js';
 import * as workflow from './workflow.js';
-import { getRelease,loadRelease } from './release.js';
+import { getRelease,loadRelease,listReleases } from './release.js';
 export function listPatients(store) {return store.db.prepare('SELECT record FROM patients ORDER BY patient_id').all().map(r=>JSON.parse(r.record));}
 export function getPatient(store,id) {text(id,'patient ID');const row=store.db.prepare('SELECT record FROM patients WHERE patient_id=?').get(id);if(!row) throw new ApiError('Patient not found',404);return JSON.parse(row.record);}
 const args=(db,id,now)=>({db,patientId:id,today:timestamp(now).slice(0,10),occurredAt:now,eventId:randomUUID()});
@@ -16,7 +16,7 @@ export function createPatient(store,db,body,{now}) {
 export function patientEvents(store,db,id) {getPatient(store,id);return db.listForPatient(id);}
 export function patientContext(store,db,id,{now}) {return buildContext(patientEvents(store,db,id),{today:timestamp(now).slice(0,10)});}
 export function recordObservation(store,db,id,body,{now}) {getPatient(store,id);exact(body,['field','value','supersedes'],['field','value']);return workflow.observe({...args(db,id,now),...body});}
-export function recordStatus(store,db,id,body,{now}) {getPatient(store,id);exact(body,['field','value','supersedes'],['field','value']);return workflow.status({...args(db,id,now),...body});}
+export function recordStatus(store,db,id,body,{now,keyDir}) {getPatient(store,id);exact(body,['field','value','supersedes'],['field','value']);const rules=keyDir?listReleases(store).flatMap(r=>loadRelease(store,r.version,{keyDir}).rules):undefined;return workflow.status({...args(db,id,now),...body,...(rules?.length?{rules}:{})});}
 export function recordDiagnosis(store,db,id,body,{now}) {getPatient(store,id);exact(body,['icd10','label','certainty'],['icd10','label']);return workflow.diagnose({...args(db,id,now),...body});}
 export function patientDiagnoses(store,db,id) {
  const events=patientEvents(store,db,id),retired=new Set(events.map(e=>e.payload.supersedes).filter(Boolean));

@@ -1,3 +1,4 @@
+import { checkNumber, checkPregnancy } from './plausibility.js';
 import { DatabaseSync } from 'node:sqlite';
 import { canonicalStringify } from './canonical.js';
 import { fields,nonempty } from './ir.js';
@@ -27,9 +28,9 @@ export function openEventLog(path) {
    if(!allowed) errors.push('Unknown event type');
    else if(fields(p,[...allowed,'supersedes',...(event.type==='patient-registered'?['age_years']:[])],allowed,'payload',errors)) {
     switch(event.type) {
-     case 'patient-registered': if(!nonempty(p.name)||!['F','M','U'].includes(p.sex)) errors.push('Invalid registration');break;
-     case 'observation-recorded': if(p.field!=='weight_kg'||typeof p.value!=='number'||!Number.isFinite(p.value)||p.value<=0) errors.push('Invalid weight');break;
-     case 'status-recorded': if(p.field!=='pregnant'||typeof p.value!=='boolean') errors.push('Invalid pregnancy status');break;
+     case 'patient-registered': if(p.age_years!==undefined) checkNumber('age_years',p.age_years);if(!nonempty(p.name)||!['F','M','U'].includes(p.sex)) errors.push('Invalid registration');break;
+     case 'observation-recorded': if(p.field==='weight_kg') checkNumber('weight_kg',p.value);if(p.field!=='weight_kg'||typeof p.value!=='number'||!Number.isFinite(p.value)||p.value<=0) errors.push('Invalid weight');break;
+     case 'status-recorded': {const registration=api.listForPatient(event.patient_id).filter(e=>e.type==='patient-registered').at(-1);checkPregnancy(p.value,registration?.payload??{});}if(p.field!=='pregnant'||typeof p.value!=='boolean') errors.push('Invalid pregnancy status');break;
      case 'diagnosis-recorded': if(!nonempty(p.icd10)||!nonempty(p.label)||!['suspected','confirmed','presumptive','ruled-out'].includes(p.certainty)) errors.push('Invalid diagnosis');break;
      case 'prescription-drafted': if(p.atc!==null&&!nonempty(p.atc)||p.tablets!==null&&(!Number.isInteger(p.tablets)||p.tablets<0)) errors.push('Invalid prescription');break;
      case 'advice-shown': {

@@ -24,7 +24,7 @@ async function refreshPatient() {
 async function listPatients() {
  const patients=await api('/api/patients');$('patient-list').replaceChildren(...patients.map(p=>{const b=el('button',{type:'button','aria-pressed':p.patient_id===patientId?'true':'false'},p.name);action(b,async()=>{patientId=p.patient_id;$('no-patient').hidden=true;$('patient-work').hidden=false;$('advice').replaceChildren(el('p',{class:'empty'},'Check a prescription to see advice.'));await listPatients();await refreshPatient();});return b;}));
 }
-form($('patient'),async()=>{const p=await api('/api/patients',{name:$('patient-name').value,sex:$('sex').value});patientId=p.patient_id;$('no-patient').hidden=true;$('patient-work').hidden=false;await listPatients();await refreshPatient();notice('Placeholder patient created.');});
+form($('patient'),async()=>{const p=await api('/api/patients',{name:$('patient-name').value,sex:$('sex').value,...($('age-years').value===''?{}:{age_years:Number($('age-years').value)})});patientId=p.patient_id;$('no-patient').hidden=true;$('patient-work').hidden=false;await listPatients();await refreshPatient();notice('Placeholder patient created.');});
 form($('weight-form'),async()=>{await api(base()+'/observations',{field:'weight_kg',value:Number($('weight').value)});await refreshPatient();notice('Weight recorded.');});
 form($('pregnancy-form'),async()=>{await api(base()+'/status',{field:'pregnant',value:$('pregnant').value==='true'});await refreshPatient();notice('Pregnancy status recorded.');});
 form($('diagnosis'),async()=>{await api(base()+'/diagnoses',{icd10:$('icd10').value,label:$('diagnosis-label').value,certainty:document.querySelector('input[name=certainty]:checked').value});await refreshPatient();notice('Placeholder diagnosis recorded.');});
