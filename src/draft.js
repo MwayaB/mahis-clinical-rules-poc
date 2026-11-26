@@ -14,7 +14,7 @@ export function draftBlocks(blocks,{documentSha,atcByBlock}) {
   const isPregnancy=block.kind==='paragraph'&&/^Pregnancy:\s*not recommended\b/i.test(block.text.trim());
   if(!isTable&&!isPregnancy) {unconverted.push({block_id:block.id,reason:'not converted: review manually'});continue;}
   const n=structuredClone(isTable?tableTemplate:predicateTemplate),errors=[];
-  n.id=`${documentSha}-${block.id}`;n.status='draft';n.risk='high';n.placeholder=true;n.reviewers=[];n.applies_to={atc:atcByBlock[block.id]??''};
+  n.id=`${documentSha}-${block.id}`;n.status='draft';n.risk='high';n.placeholder=true;n.reviewers=[];n.applies_to={...n.applies_to,atc:atcByBlock[block.id]??''};
   n.source={page:block.page,bbox:[...block.bbox],text:block.text};
   if(!n.applies_to.atc.trim()) errors.push('Reviewer must supply the ATC code');
   if(isTable) {

@@ -7,6 +7,14 @@ export function evaluate(loadedPackage, ctx) {
   advice.push({rule_id:'input-proposed_atc',severity:'warn',message:'proposed_atc not recorded; cannot select rules',source_ref:'context:proposed_atc'});
  } else for(const n of loadedPackage.rules) {
   if(n.applies_to.atc!==ctx.proposed_atc) continue;
+  const a=n.applies_to;
+  // Known exclusions take priority over missing applicability or clinical inputs.
+  if(a.sex!==undefined&&ctx.sex!=null&&a.sex!==ctx.sex) continue;
+  if(a.age_years&&ctx.age_years!=null&&(ctx.age_years<a.age_years.min||ctx.age_years>a.age_years.max)) continue;
+  const absentApplicability=[];
+  if(a.sex!==undefined&&ctx.sex==null) absentApplicability.push('sex');
+  if(a.age_years&&ctx.age_years==null) absentApplicability.push('age_years');
+  if(absentApplicability.length) {for(const field of absentApplicability) missing(n,field);continue;}
   if(n.type==='table') {
    const x=ctx[n.input];
    if(x==null) {missing(n,n.input,n.on_missing_input);if(ctx.proposed_tablets==null) missing(n,'proposed_tablets');continue;}

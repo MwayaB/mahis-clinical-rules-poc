@@ -8,10 +8,10 @@ export function listPatients(store) {return store.db.prepare('SELECT record FROM
 export function getPatient(store,id) {text(id,'patient ID');const row=store.db.prepare('SELECT record FROM patients WHERE patient_id=?').get(id);if(!row) throw new ApiError('Patient not found',404);return JSON.parse(row.record);}
 const args=(db,id,now)=>({db,patientId:id,today:timestamp(now).slice(0,10),occurredAt:now,eventId:randomUUID()});
 export function createPatient(store,db,body,{now}) {
- exact(body,['name','sex','patient_id'],['name','sex']);text(body.name,'name');if(!['F','M','U'].includes(body.sex)) throw new ApiError('Sex must be F, M or U');
+ exact(body,['name','sex','patient_id','age_years'],['name','sex']);text(body.name,'name');if(!['F','M','U'].includes(body.sex)) throw new ApiError('Sex must be F, M or U');
  const id=body.patient_id===undefined?randomUUID():text(body.patient_id,'patient ID');if(store.db.prepare('SELECT 1 FROM patients WHERE patient_id=?').get(id)) throw new ApiError('Patient ID already exists',409);
- workflow.register({...args(db,id,now),name:body.name,sex:body.sex});
- const record={patient_id:id,name:body.name,sex:body.sex,created_at:now,placeholder:true};store.db.prepare('INSERT INTO patients VALUES(?,?)').run(id,store.encode(record));return record;
+ workflow.register({...args(db,id,now),name:body.name,sex:body.sex,age_years:body.age_years});
+ const record={patient_id:id,name:body.name,sex:body.sex,age_years:body.age_years??null,created_at:now,placeholder:true};store.db.prepare('INSERT INTO patients VALUES(?,?)').run(id,store.encode(record));return record;
 }
 export function patientEvents(store,db,id) {getPatient(store,id);return db.listForPatient(id);}
 export function patientContext(store,db,id,{now}) {return buildContext(patientEvents(store,db,id),{today:timestamp(now).slice(0,10)});}

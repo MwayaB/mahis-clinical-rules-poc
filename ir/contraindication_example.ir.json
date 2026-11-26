@@ -27,7 +27,12 @@
       "id": "drugx-pregnancy",
       "type": "predicate",
       "applies_to": {
-        "atc": "J01XX01"
+        "atc": "J01XX01",
+        "sex": "F",
+        "age_years": {
+          "min": 12,
+          "max": 50
+        }
       },
       "when": {
         "pregnant": true

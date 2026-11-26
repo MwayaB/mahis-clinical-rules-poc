@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { join,resolve } from 'node:path';
@@ -23,7 +24,7 @@ async function jsonBody(req) {
  if(req.headers['content-type']?.split(';')[0]!=='application/json') throw new ApiError('Content-Type must be application/json',415);
  const bytes=await readBody(req,2*1024*1024);try{return JSON.parse(bytes);}catch{throw new ApiError('Invalid JSON body');}
 }
-export async function startServer({host='127.0.0.1',port=8080,dataDir=new URL('../data/',import.meta.url).pathname,keyDir=new URL('../keys/',import.meta.url).pathname,clock,fixtureDir,publicDir=new URL('../public/',import.meta.url).pathname}={}) {
+export async function startServer({host='127.0.0.1',port=8080,dataDir=new URL('../data/',import.meta.url).pathname,keyDir=new URL('../keys/',import.meta.url).pathname,clock,fixtureDir,publicDir=fileURLToPath(new URL('../public/',import.meta.url))}={}) {
  if(host!=='127.0.0.1') throw new ApiError('Server must bind to 127.0.0.1 only');
  if(!Number.isInteger(port)||port<0||port>65535||typeof clock!=='function') throw new ApiError('Valid port and caller clock required');
  const store=openStore(dataDir),events=openEventLog(join(store.root,'clinical.db'));let server;

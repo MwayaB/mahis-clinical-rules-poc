@@ -6,7 +6,9 @@
       "weight_kg": 12,
       "pregnant": true,
       "proposed_atc": "J01XX01",
-      "proposed_tablets": 2
+      "proposed_tablets": 2,
+      "sex": "F",
+      "age_years": 30
     },
     "expect": [
       "drugx-pregnancy"
@@ -19,7 +21,9 @@
       "weight_kg": 12,
       "pregnant": false,
       "proposed_atc": "J01XX01",
-      "proposed_tablets": 2
+      "proposed_tablets": 2,
+      "sex": "F",
+      "age_years": 30
     },
     "expect": []
   }

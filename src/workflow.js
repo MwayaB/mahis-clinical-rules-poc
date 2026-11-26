@@ -9,7 +9,7 @@ function record(args,type,payload) {
  if(type!=='patient-registered'&&!db.listForPatient(patientId).some(e=>e.type==='patient-registered')) throw new Error('Patient not registered');
  return db.append({event_id:eventId,patient_id:patientId,type,payload,occurred_at:occurredAt});
 }
-export const register=args=>record(args,'patient-registered',{name:args.name,sex:args.sex});
+export const register=args=>record(args,'patient-registered',{name:args.name,sex:args.sex,...(args.age_years!==undefined?{age_years:args.age_years}:{})});
 export const observe=args=>record(args,'observation-recorded',{field:args.field,value:args.value,...(args.supersedes?{supersedes:args.supersedes}:{})});
 export const status=args=>record(args,'status-recorded',{field:args.field,value:args.value,...(args.supersedes?{supersedes:args.supersedes}:{})});
 export const diagnose=args=>record(args,'diagnosis-recorded',{icd10:args.icd10,label:args.label,certainty:args.certainty??'suspected'});

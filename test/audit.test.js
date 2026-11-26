@@ -1,0 +1,15 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { validateIR } from '../src/ir.js';
+import { projectRules } from '../src/compiler.js';
+import { evaluate } from '../src/evaluator.js';
+import { predicate, dose, clone, environment } from './helpers.js';
+const pkg=nodes=>({rules:projectRules({...dose,nodes}),manifest:{package_version:'fixture',contains_placeholders:true},engine_version:'0.1.0'});
+const pregnancy=()=>{const n=clone(predicate.nodes[0]);n.applies_to={atc:'J01XX01',sex:'F',age_years:{min:12,max:50}};return n;};
+const child={sex:'M',age_years:10,proposed_atc:'J01XX01'};
+test('audit-A1 schema and compiler carry sex and inclusive age range',()=>{const n=pregnancy();assert.deepEqual(validateIR({...predicate,nodes:[n]}),[]);assert.deepEqual(pkg([n]).rules[0].applies_to,n.applies_to);n.applies_to.age_years.min=51;assert.ok(validateIR({...predicate,nodes:[n]}).length);});
+test('audit-A2 male child receives no pregnancy advice',()=>{assert.deepEqual(evaluate(pkg([pregnancy()]),{...child,pregnant:true}).advice,[]);for(const age_years of [11,51]) assert.deepEqual(evaluate(pkg([pregnancy()]),{...child,sex:'F',age_years,pregnant:true}).advice,[]);for(const age_years of [12,50]) assert.equal(evaluate(pkg([pregnancy()]),{...child,sex:'F',age_years,pregnant:true}).advice[0].severity,'block');});
+test('audit-A3 exclusions precede missing inputs; applicable missing stays visible',()=>{assert.deepEqual(evaluate(pkg([pregnancy()]),child).advice,[]);assert.deepEqual(evaluate(pkg([pregnancy()]),{proposed_atc:'J01XX01',sex:'M'}).advice,[]);assert.match(evaluate(pkg([pregnancy()]),{...child,sex:'F',age_years:30}).advice[0].message,/pregnant not recorded/);assert.match(evaluate(pkg([pregnancy()]),{proposed_atc:'J01XX01',sex:'F'}).advice[0].message,/age_years not recorded/);});
+test('audit-A4 sample pregnancy has female age applicability',()=>{assert.equal(predicate.nodes[0].applies_to.sex,'F');assert.deepEqual(predicate.nodes[0].applies_to.age_years,{min:12,max:50});assert.equal(predicate.nodes[0].placeholder,true);});
+test('audit-A5 pregnancy condition without female restriction rejected',()=>{for(const sex of [undefined,'M','U']) {const n=pregnancy();if(sex===undefined) delete n.applies_to.sex;else n.applies_to.sex=sex;assert.match(validateIR({...predicate,nodes:[n]}).join(' '),/pregnancy.*sex F/);}});

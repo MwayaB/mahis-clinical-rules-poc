@@ -25,7 +25,7 @@ export function openEventLog(path) {
    if(!nonempty(event.event_id)||!nonempty(event.patient_id)||!validTimestamp(event.occurred_at)) errors.push('Invalid event identity or timestamp');
    const allowed=shapes[event.type];const p=event.payload;
    if(!allowed) errors.push('Unknown event type');
-   else if(fields(p,[...allowed,'supersedes'],allowed,'payload',errors)) {
+   else if(fields(p,[...allowed,'supersedes',...(event.type==='patient-registered'?['age_years']:[])],allowed,'payload',errors)) {
     switch(event.type) {
      case 'patient-registered': if(!nonempty(p.name)||!['F','M','U'].includes(p.sex)) errors.push('Invalid registration');break;
      case 'observation-recorded': if(p.field!=='weight_kg'||typeof p.value!=='number'||!Number.isFinite(p.value)||p.value<=0) errors.push('Invalid weight');break;

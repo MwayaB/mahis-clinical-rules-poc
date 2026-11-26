@@ -3,12 +3,12 @@ import { getNode } from './review.js';
 import { projectRules,fixtureGate } from './compiler.js';
 import { listDrafts } from './draft.js';
 import { validDay } from './events.js';
-const contextKeys=['today','weight_kg','pregnant','proposed_atc','proposed_tablets'];
+const contextKeys=['today','weight_kg','pregnant','proposed_atc','proposed_tablets','sex','age_years'];
 function validateEntries(entries) {
  if(!Array.isArray(entries)||entries.length>1000) throw new ApiError('Fixtures must be an array with at most 1000 entries');
  for(const f of entries) {
   exact(f,['name','ctx','expect']);if(typeof f.name!=='string'||!f.name.trim()||!Array.isArray(f.expect)||new Set(f.expect).size!==f.expect.length||f.expect.some(id=>typeof id!=='string')) throw new ApiError('Invalid fixture name or expectations');
-  exact(f.ctx,contextKeys);
+  exact(f.ctx,contextKeys,['today','weight_kg','pregnant','proposed_atc','proposed_tablets']);
   if(!validDay(f.ctx.today)||f.ctx.weight_kg!==null&&(typeof f.ctx.weight_kg!=='number'||!Number.isFinite(f.ctx.weight_kg))||f.ctx.pregnant!==null&&typeof f.ctx.pregnant!=='boolean'||f.ctx.proposed_atc!==null&&typeof f.ctx.proposed_atc!=='string'||f.ctx.proposed_tablets!==null&&(!Number.isInteger(f.ctx.proposed_tablets)||f.ctx.proposed_tablets<0)) throw new ApiError('Invalid fixture context');
  }
 }

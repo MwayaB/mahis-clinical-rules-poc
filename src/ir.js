@@ -36,8 +36,16 @@ export function validateNodes(nodes, { compiled=false }={}) {
     if(!nonempty(s.text)) add('invalid source.text');
    }
   }
-  if(fields(n.applies_to,['atc'],['atc'],path+'.applies_to',errors)&&!nonempty(n.applies_to.atc)) add('invalid ATC');
+  if(fields(n.applies_to,['atc','sex','age_years'],['atc'],path+'.applies_to',errors)) {
+   const a=n.applies_to;
+   if(!nonempty(a.atc)) add('invalid ATC');
+   if(a.sex!==undefined&&!['F','M','U'].includes(a.sex)) add('invalid applicability sex');
+   if(a.age_years!==undefined&&fields(a.age_years,['min','max'],['min','max'],path+'.applies_to.age_years',errors)) {
+    if(!Number.isFinite(a.age_years.min)||!Number.isFinite(a.age_years.max)||a.age_years.min<0||a.age_years.max>120||a.age_years.min>a.age_years.max) add('invalid applicability age_years');
+   }
+  }
   if(n.type==='predicate') {
+   if(Object.hasOwn(n.when??{},'pregnant')&&n.applies_to?.sex!=='F') add('pregnancy condition requires applies_to.sex F');
    if(!['block','warn','info'].includes(n.severity)) add('unknown severity');
    if(!nonempty(n.message)) add('message required');
    if(!object(n.when)||!Object.keys(n.when).length) add('nonempty flat when required');
