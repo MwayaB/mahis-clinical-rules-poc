@@ -198,3 +198,75 @@ Every suite includes the unchanged evaluator purity test. HTTP suites require ex
 - `README.md`, `AUDIT.md`: decisions, guards, evidence and outcome report.
 
 No browser interaction/visual QA performed; API, static UI assertions and both executable demo paths are tested. No real clinical source validity is asserted. The narrower sample pregnancy range is placeholder applicability, not clinical guidance.
+
+## Terminology
+
+### Scope and final behavior
+
+The user added terminology validation, then clarified that mock rule data must be present in the PDF and that the PDF should contain guideline material only. The final shipped source contains malaria, pneumonia and pregnancy sections, including the actual indication/drug identifiers and pregnancy age/sex scope. Patient scenarios and software instructions are excluded. The EMR automatically selects rules from patient data; no clinician chooses individual rules.
+
+- `terminology/icd10-seed.json` preserves the requested 12-entry placeholder subset; `terminology/README.md` explains its status. `src/terminology.js` strictly rejects unknown fields, duplicate codes, missing metadata and empty labels, and supplies exact lookup, prefix lookup and labels.
+- `src/ir.js` takes a terminology argument; unknown prefixes name both node and prefix. `src/compiler.js` validates against the supplied terminology, records its version in the signed manifest, and refuses unresolved prefixes. Terminology-change warnings cannot establish positive clinical fixture coverage.
+- `src/workflow.js`, `src/events.js`, `src/emr.js` reject unknown diagnosis codes with HTTP 422. Events retain canonical `label`, entered text as `label_entered` when different, `system`, and `terminology_version`; response warnings are separate from stored event shape. The EMR displays those response warnings.
+- `src/context.js` carries each active diagnosis's version and a `terminology_changed` flag. `src/evaluator.js` warns and defers indication evaluation across version changes, retaining purity. `src/package.js` requires a release terminology version and structurally validates signed rules without reinterpreting their prefixes against a different installed seed. Replay uses the exact recorded package version.
+- `src/fixtures.js` accepts versioned known diagnosis contexts and generates exact known codes from the seed. Authored fixture validation keeps clinical input failures separate from applicability exclusions.
+
+### Code literal audit
+
+No quoted ICD-10 literal existed in `src/` before the terminology work, and none exists now (`test/terminology/no_literals.test.js` recursively checks). Generic validation patterns are logic; specific codes remain data. Existing script literals in `scripts/demo-flow.js` and `scripts/prototype-flow.js` were moved to `samples/dose-guide/bundle.json` (`demo_diagnoses`). The PDF generator also reads its diagnosis data from that bundle. IR examples, fixture contexts and tests intentionally contain code values. No code-specific branch was added to an evaluator, compiler, context, workflow or API module.
+
+### Existing diagnosis data
+
+The old implementation accepted arbitrary nonempty diagnosis strings. Before this change, `test/prototype/emr.test.js` explicitly entered the unknown value `PLACEHOLDER`, and the adult case used a code absent from this subset; those tests now use known seed codes. The former acceptance is replaced by explicit unknown-code rejection tests, not ignored.
+
+Read-only inspection of `data/prototype-demo/clinical.db` found **5 diagnosis events, 0 codes outside the new seed, and 5 events lacking terminology_version**. This count was checked again after implementation. Existing append-only events were not rewritten. All five require a visible version-change warning in a current indication check. The saved database was not migrated or cleared. Old versionless releases cannot be silently upgraded to this schema; a new reviewed release is required.
+
+### Unverified seed labels
+
+All supplied labels remain unverified against WHO ICD-10:
+
+- Plasmodium falciparum malaria, unspecified
+- Unspecified malaria
+- Infectious gastroenteritis and colitis, unspecified
+- Tuberculosis of lung, confirmed by sputum microscopy
+- Human immunodeficiency virus [HIV] disease
+- Pneumonia, unspecified organism
+- Acute upper respiratory infection, unspecified
+- Type 2 diabetes mellitus without complications
+- Essential (primary) hypertension
+- Severe pre-eclampsia
+- Supervision of normal pregnancy, unspecified
+- Fever, unspecified
+
+No clinical code or chapter taxonomy was inferred. Chapter markers were preserved exactly as supplied; they are not asserted to be authoritative WHO chapter identifiers. Diagnosis lookup is exact and case-sensitive. Prefix matching includes the literal dot; no dot stripping, case normalization or remapping is performed. Only confirmed/presumptive, non-retired diagnoses are active indications. Ruled-out and suspected entries never match. Missing or different version metadata triggers a warning rather than reinterpretation.
+
+### Source and sample changes
+
+- `samples/dose-guide/placeholder.pdf`: regenerated as a one-page guideline-only placeholder, retaining the original malaria weight bands/values. Added explicit malaria/pneumonia indications, ATC identifiers, pregnancy scope and a new pneumonia table (5 to <35 kg, 2 placeholder tablets). The new table does not alter any existing clinical value.
+- `samples/dose-guide/source.json`: authoring source for that guideline. `scripts/generate-sample-pdf.py` generates the PDF, SHA-256, matching mock fixture and source-dependent fixture IDs. Repeating generation produces the same PDF hash.
+- `fixtures/digitised/2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497.json`: exact source blocks `b1` malaria, `b2` pregnancy, `b3` pneumonia. Replaces the old two-block fixture for the old PDF checksum. Mock digitisation remains a fixture lookup rather than OCR.
+- `src/draft.js`: reads explicit ATC, ICD-10, sex and inclusive age annotations from source text. Generic source tables never inherit an indication from a sample template. Conflicting supplied/source ATC codes leave visible parser errors. The earlier template-applicability copying approach is superseded by source-grounded parsing.
+- `ir/dose_band_example.ir.json`: original bands unchanged; malaria prefix remains. `ir/contraindication_example.ir.json`: female/12–50 applicability remains. `ir/pneumonia_dose_example.ir.json`: new separate placeholder pneumonia rule matching the PDF's second table.
+- `samples/dose-guide/bundle.json`: matching checksum, fixtures for all three source rules, versioned diagnosis contexts and data-only demo diagnoses. The refreshed curl demo uses `poc-demo-0.2.0`, preserving prior signed releases.
+- `fixtures/indication.fixtures.json`: all five requested indication cases (correct/wrong malaria dose, unrelated pneumonia, ruled-out malaria, no diagnosis). The final two assert visible no-indication warnings; neither is treated as clinical dose advice. `fixtures/pneumonia_dose_example.fixtures.json`: second rule positive/negative cases.
+- `public/review.js`: preserves applicability on save, provides sex/age/indication fields in authoring, and preserves versioned diagnoses in fixture edits. Sex belongs under applies_to rather than when. The screenshot-related invalid state can be corrected through an audited edit; prior approvals reset and two reviewers are still required. Existing saved pregnancy draft was already correct when inspected and was not altered.
+- `src/server.js`: consistently decodes default local data/key/public file URLs, fixing workspace names containing spaces.
+
+### Tests, compatibility and limitations
+
+All requested terminology test files are present under `test/terminology/`: `seed_loads`, `no_literals`, `ir_icd_prefix`, `diagnosis_api`, `terminology_version`, `indication_fixtures`, and `release_terminology`. They verify unknown codes, labels/metadata, low-level entry rejection, unresolved compile prefixes, all five fixture cases, cross-version warnings and exact replay. Added source tests ensure PDF authoring data equals mock block data and all three rule scopes are parsed without manual mapping. Generic draft tests ensure absent source scope is never invented.
+
+Existing tests were updated only to supply the newly required terminology versions in synthetic contexts, use known codes where entry succeeds, and account for three source blocks rather than two. The old unknown-code acceptance test now uses a known code for its success path; dedicated rejection tests cover the corrected behavior. Helper HTTP fixtures explicitly add synthetic test scopes only where their generic mock source omits them; shipped-PDF tests read applicability directly from the source. No existing assertion was weakened or skipped.
+
+PDF QA: generated and inspected the final rendered page; verified one page, all source text and table cells via pypdf extraction, and no patient scenarios/software implementation sections. No live browser interaction or WHO label verification was performed. Production signed terminology distribution remains outside this prototype. No npm dependencies were added; Python/ReportLab is authoring-time tooling only.
+
+| Additional commit stage | Full Node 22.18 suite after commit | Skipped |
+|---|---|---|
+| Review form `541aac1` | 142/142 | 0 |
+| Seed/loader `7d295c4` | 144/144 | 0 |
+| Validation/versioning `33fd8b0` | 150/150 | 0 |
+| PDF/source/sample alignment `cffe2b6` | 154/154 | 0 |
+| Versioned fixture coverage/demo identity `d835311` | 155/155 | 0 |
+| Final README/report | 155/155 | 0 |
+
+Every suite includes the unchanged evaluator purity test. Both standalone and curl-driven demos run in regression tests, including a missing-indication warning, child dose correction, adult pregnancy block and replay.
