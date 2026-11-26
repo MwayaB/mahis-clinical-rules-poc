@@ -1,0 +1,68 @@
+{
+  "system": "ICD-10",
+  "terminology_version": "seed-placeholder-2026",
+  "source": "Subset for prototype use. Labels must be verified against the WHO ICD-10 release before any clinical use.",
+  "placeholder": true,
+  "codes": [
+    {
+      "code": "B50.9",
+      "label": "Plasmodium falciparum malaria, unspecified",
+      "chapter": "A"
+    },
+    {
+      "code": "B54",
+      "label": "Unspecified malaria",
+      "chapter": "A"
+    },
+    {
+      "code": "A09",
+      "label": "Infectious gastroenteritis and colitis, unspecified",
+      "chapter": "A"
+    },
+    {
+      "code": "A15.0",
+      "label": "Tuberculosis of lung, confirmed by sputum microscopy",
+      "chapter": "A"
+    },
+    {
+      "code": "B20",
+      "label": "Human immunodeficiency virus [HIV] disease",
+      "chapter": "B"
+    },
+    {
+      "code": "J18.9",
+      "label": "Pneumonia, unspecified organism",
+      "chapter": "J"
+    },
+    {
+      "code": "J06.9",
+      "label": "Acute upper respiratory infection, unspecified",
+      "chapter": "J"
+    },
+    {
+      "code": "E11.9",
+      "label": "Type 2 diabetes mellitus without complications",
+      "chapter": "E"
+    },
+    {
+      "code": "I10",
+      "label": "Essential (primary) hypertension",
+      "chapter": "I"
+    },
+    {
+      "code": "O14.1",
+      "label": "Severe pre-eclampsia",
+      "chapter": "O"
+    },
+    {
+      "code": "Z34.9",
+      "label": "Supervision of normal pregnancy, unspecified",
+      "chapter": "Z"
+    },
+    {
+      "code": "R50.9",
+      "label": "Fever, unspecified",
+      "chapter": "R"
+    }
+  ]
+}
