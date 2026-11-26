@@ -1,3 +1,4 @@
+import { evaluate } from './evaluator.js';
 import { mkdirSync, writeFileSync, renameSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createHash, sign } from 'node:crypto';
@@ -8,15 +9,8 @@ export const sha256 = bytes=>createHash('sha256').update(bytes).digest('hex');
 export function projectRules(ir) {
  return ir.nodes.map(n=>Object.fromEntries(['id','type',...(n.type==='table'?tableFields:predicateFields)].map(k=>[k,n[k]]).concat([['source_ref',`${ir.document.id}:p${n.source.page}:${n.id}`]])));
 }
-// Replaced by the production evaluator once Part 5 is implemented.
 function fixtureAdvice(rules,ctx) {
- if(ctx.proposed_atc==null) throw new Error('fixture proposed_atc required');
- return rules.filter(n=>n.applies_to.atc===ctx.proposed_atc).filter(n=>{
-  if(n.type==='predicate') return Object.entries(n.when).some(([k])=>ctx[k]==null)||Object.entries(n.when).every(([k,v])=>ctx[k]===v);
-  if(ctx[n.input]==null||ctx.proposed_tablets==null) return true;
-  const b=n.bands.find(b=>(ctx[n.input]>b.min||b.min_inclusive&&ctx[n.input]===b.min)&&(ctx[n.input]<b.max||b.max_inclusive&&ctx[n.input]===b.max));
-  return !b||b.value!==ctx.proposed_tablets;
- }).map(n=>n.id).sort();
+ return evaluate({rules,manifest:{package_version:'fixture',contains_placeholders:true},engine_version:ENGINE_VERSION},Object.freeze(ctx)).advice.map(n=>n.rule_id).sort();
 }
 export function fixtureGate(rules,fixtures) {
  if(!Array.isArray(fixtures)) throw new Error('Fixtures must be an array');
