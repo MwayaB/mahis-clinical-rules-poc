@@ -1,0 +1,68 @@
+{
+  "ir_version": "0.1",
+  "document": {
+    "id": "EXAMPLE-DOSE_BAND_EXAMPLE",
+    "edition": "placeholder-2026",
+    "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "nodes": [
+    {
+      "risk": "high",
+      "status": "approved",
+      "placeholder": true,
+      "reviewers": [
+        "placeholder-reviewer-a",
+        "placeholder-reviewer-b"
+      ],
+      "source": {
+        "page": 1,
+        "bbox": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "text": "PLACEHOLDER excerpt; not clinical guidance."
+      },
+      "id": "al-dose-weight-band",
+      "type": "table",
+      "applies_to": {
+        "atc": "P01BF01"
+      },
+      "input": "weight_kg",
+      "coverage": {
+        "min": 5,
+        "max": 35
+      },
+      "bands": [
+        {
+          "min": 5,
+          "max": 15,
+          "min_inclusive": true,
+          "max_inclusive": false,
+          "value": 1,
+          "unit": "tablet"
+        },
+        {
+          "min": 15,
+          "max": 25,
+          "min_inclusive": true,
+          "max_inclusive": false,
+          "value": 2,
+          "unit": "tablet"
+        },
+        {
+          "min": 25,
+          "max": 35,
+          "min_inclusive": true,
+          "max_inclusive": false,
+          "value": 3,
+          "unit": "tablet"
+        }
+      ],
+      "on_missing_input": "warn",
+      "on_no_band": "warn",
+      "message_template": "PLACEHOLDER: At {input_value} kg the guideline dose is {value} {unit}; {observed} recorded."
+    }
+  ]
+}

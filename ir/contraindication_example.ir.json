@@ -1,0 +1,39 @@
+{
+  "ir_version": "0.1",
+  "document": {
+    "id": "EXAMPLE-CONTRAINDICATION_EXAMPLE",
+    "edition": "placeholder-2026",
+    "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "nodes": [
+    {
+      "risk": "high",
+      "status": "approved",
+      "placeholder": true,
+      "reviewers": [
+        "placeholder-reviewer-a",
+        "placeholder-reviewer-b"
+      ],
+      "source": {
+        "page": 1,
+        "bbox": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "text": "PLACEHOLDER excerpt; not clinical guidance."
+      },
+      "id": "drugx-pregnancy",
+      "type": "predicate",
+      "applies_to": {
+        "atc": "J01XX01"
+      },
+      "when": {
+        "pregnant": true
+      },
+      "severity": "block",
+      "message": "PLACEHOLDER: Not recommended in pregnancy."
+    }
+  ]
+}
