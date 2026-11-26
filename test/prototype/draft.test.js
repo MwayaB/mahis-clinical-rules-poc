@@ -1,0 +1,11 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { draftBlocks,generateDrafts } from '../../src/draft.js';
+import { manualBlock } from '../../src/digitiser.js';
+import { setup,source,NOW } from './support.js';
+const block={page:1,id:'b1',kind:'table',bbox:[40,120,560,380],text:'PLACEHOLDER weight table',cells:[['Weight (kg)','Tablets'],['5 to <15','1'],['15 to <25','2'],['25 to <35','3']]};
+const options={documentSha:'a'.repeat(64),atcByBlock:{b1:'P01BF01',b2:'J01XX01'}};
+test('deterministic drafts parse only supported cells, preserve provenance and remain high-risk placeholders',()=>{const a=draftBlocks([block],options);assert.deepEqual(a,draftBlocks([block],options));const n=a.nodes[0].node;assert.equal(n.status,'draft');assert.equal(n.risk,'high');assert.equal(n.placeholder,true);assert.deepEqual(n.reviewers,[]);assert.deepEqual(n.bands[0],{min:5,max:15,min_inclusive:true,max_inclusive:false,value:1,unit:'tablet'});assert.deepEqual(n.source,{page:block.page,bbox:block.bbox,text:block.text});});
+test('bad cells carry parse errors; unknown paragraph is not invented',()=>{const b=structuredClone(block);b.cells[1][0]='unknown';const r=draftBlocks([b,{page:1,id:'b2',kind:'paragraph',bbox:[0,0,1,1],text:'PLACEHOLDER unrelated text'}],options);assert.ok(r.nodes[0].node.parse_errors.length);assert.equal(r.nodes.length,1);assert.equal(r.unconverted[0].block_id,'b2');});
+test('pregnancy recogniser copies human-authored predicate and refuses qualification without review',()=>{const b={page:1,id:'b2',kind:'paragraph',bbox:[0,0,1,1],text:'Pregnancy: not recommended (PLACEHOLDER text).'};const n=draftBlocks([b],options).nodes[0].node;assert.deepEqual(n.when,{pregnant:true});assert.equal(n.severity,'block');assert.ok(draftBlocks([{...b,text:'Pregnancy: not recommended in the first trimester (placeholder).'}],options).nodes[0].node.parse_errors.length);});
+test('draft generation persists revisions and never overwrites existing drafts',t=>{const s=setup(t),src=source(s);manualBlock(s,src.sha256,block);const a=generateDrafts(s,src.sha256,{atc_by_block:{b1:'P01BF01'}},{actor:'placeholder-editor',now:NOW});const b=generateDrafts(s,src.sha256,{atc_by_block:{b1:'CHANGED'}},{actor:'placeholder-editor',now:NOW});assert.deepEqual(a,b);assert.equal(s.db.prepare('SELECT count(*) AS n FROM review_events').get().n,1);});
