@@ -1,0 +1,7 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { startServer } from '../../src/server.js';
+import { httpEnvironment } from './support.js';
+test('non-loopback binding refused',async()=>{await assert.rejects(()=>startServer({host:'0.0.0.0',port:0,clock:()=>''}),/127.0.0.1/);});
+test('traversal, unknown query fields, cross-origin and private key routes refused',async t=>{const s=await httpEnvironment(t);for(const path of ['/api/guidelines/nothex','/api/guidelines/%2fkeys','/api/guidelines/'+'a'.repeat(63),'/keys/dev-private.pem','/data/sources/private.pdf','/src/server.js','/api/guidelines?unknown=true']) {const r=await fetch(s.app.url+path);assert.ok(r.status>=400,path);assert.ok(!(await r.text()).includes('BEGIN PRIVATE KEY'));}assert.equal((await s.request('/api/guidelines',undefined,{headers:{Origin:'http://evil.invalid'}})).status,403);assert.equal((await s.request('/api/patients',{name:'x',sex:'U'},{headers:{'Content-Type':'text/plain'}})).status,415);});
+test('HTTP upload rejects oversized and non-PDF requests before registry mutation',async t=>{const s=await httpEnvironment(t);assert.equal((await s.request('/api/guidelines?filename=x.pdf&document_id=X',Buffer.from('bad'))).status,400);assert.equal((await s.request('/api/guidelines?filename=x.pdf&document_id=X',Buffer.alloc(25*1024*1024+1))).status,413);assert.deepEqual(await s.ok('/api/guidelines'),[]);});

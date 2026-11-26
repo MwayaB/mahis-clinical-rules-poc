@@ -4,6 +4,15 @@ import { openEventLog } from './events.js';
 import * as workflow from './workflow.js';
 const [command,...tokens]=process.argv.slice(2);
 const flags={};
+if(command==='serve') {
+ try {
+  const opts={};for(let i=0;i<tokens.length;i+=2) {const k=tokens[i].slice(2);if(!tokens[i].startsWith('--')||!['port','data','keys','host'].includes(k)||!tokens[i+1]||Object.hasOwn(opts,k)) throw Error('Invalid server arguments');opts[k]=tokens[i+1];}
+  const {startServer}=await import('./server.js');
+  const app=await startServer({host:opts.host??'127.0.0.1',port:opts.port===undefined?8080:Number(opts.port),dataDir:opts.data,keyDir:opts.keys,clock:()=>new Date().toISOString()});
+  console.log(`Local placeholder prototype: ${app.url}/guidelines.html`);
+  for(const signal of ['SIGINT','SIGTERM']) process.once(signal,async()=>{await app.close();process.exit(0);});
+ } catch(e) {console.error(e.message);process.exitCode=1;}
+} else {
 try {
  const allowed={register:['patient-id','name','sex'],observe:['patient-id','field','value','supersedes'],status:['patient-id','field','value','supersedes'],diagnose:['patient-id','icd10','label','certainty'],prescribe:['patient-id','atc','tablets','package','pubkey'],events:['patient-id'],respond:['patient-id','advice-ref','action','reason']};
  if(!allowed[command]) throw new Error('Commands: register, observe, status, diagnose, prescribe, events, respond');
@@ -34,3 +43,5 @@ try {
   console.log(JSON.stringify(output,null,2));
  } finally {db.close();}
 } catch(e) {console.error(e.message);process.exitCode=1;}
+
+}
