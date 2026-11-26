@@ -1,3 +1,4 @@
+import { defaultTerminology,hasPrefix } from './terminology.js';
 import { canonicalStringify } from './canonical.js';
 export const contextFields = ['today','weight_kg','pregnant','proposed_atc','proposed_tablets'];
 export const object = x => x !== null && typeof x === 'object' && !Array.isArray(x);
@@ -11,7 +12,7 @@ export function fields(x, allowed, required, path, errors) {
 export const commonFields=['id','type','risk','status','source','placeholder','reviewers'];
 export const tableFields=['applies_to','input','coverage','bands','on_missing_input','on_no_band','message_template'];
 export const predicateFields=['applies_to','when','severity','message'];
-export function validateNodes(nodes, { compiled=false }={}) {
+export function validateNodes(nodes, { compiled=false,terminology=defaultTerminology }={}) {
  const errors=[]; const ids=new Set();
  if (!Array.isArray(nodes) || !nodes.length) return ['nodes: nonempty array required'];
  nodes.forEach((n,i)=>{
@@ -38,7 +39,8 @@ export function validateNodes(nodes, { compiled=false }={}) {
   }
   if(fields(n.applies_to,['atc','sex','age_years','icd10'],['atc'],path+'.applies_to',errors)) {
    const a=n.applies_to;
-   if(a.icd10!==undefined&&(!nonempty(a.icd10)||! /^[A-Z][0-9]{2}(?:\.[A-Z0-9]{1,4})?$/.test(a.icd10))) add('invalid ICD-10 prefix');
+   // Signed compiled rules retain their release terminology; do not reinterpret with the installed seed.
+   if(a.icd10!==undefined&&(!nonempty(a.icd10)||! /^[A-Z][0-9]{2}(?:\.[A-Z0-9]{1,4})?$/.test(a.icd10)||terminology!==null&&!hasPrefix(terminology,a.icd10))) add('unknown ICD-10 prefix '+JSON.stringify(a.icd10));
    if(!nonempty(a.atc)) add('invalid ATC');
    if(a.sex!==undefined&&!['F','M','U'].includes(a.sex)) add('invalid applicability sex');
    if(a.age_years!==undefined&&fields(a.age_years,['min','max'],['min','max'],path+'.applies_to.age_years',errors)) {
@@ -83,7 +85,7 @@ export function validateNodes(nodes, { compiled=false }={}) {
  });
  return errors;
 }
-export function validateIR(ir) {
+export function validateIR(ir,terminology=defaultTerminology) {
  const errors=[];
  try { canonicalStringify(ir); } catch(e) { errors.push('IR: '+e.message); }
  if(!fields(ir,['ir_version','document','nodes'],['ir_version','document','nodes'],'IR',errors)) return errors;
@@ -92,5 +94,5 @@ export function validateIR(ir) {
   for(const k of ['id','edition']) if(!nonempty(ir.document[k])) errors.push('document: invalid '+k);
   if(!/^sha256:[a-f0-9]{64}$/.test(ir.document.checksum)) errors.push('document: invalid checksum');
  }
- return errors.concat(validateNodes(ir.nodes));
+ return errors.concat(validateNodes(ir.nodes,{terminology}));
 }

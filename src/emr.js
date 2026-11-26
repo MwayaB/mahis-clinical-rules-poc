@@ -20,7 +20,7 @@ export function recordStatus(store,db,id,body,{now,keyDir}) {getPatient(store,id
 export function recordDiagnosis(store,db,id,body,{now}) {getPatient(store,id);exact(body,['icd10','label','certainty'],['icd10','label']);return workflow.diagnose({...args(db,id,now),...body});}
 export function patientDiagnoses(store,db,id) {
  const events=patientEvents(store,db,id),retired=new Set(events.map(e=>e.payload.supersedes).filter(Boolean));
- return events.filter(e=>e.type==='diagnosis-recorded'&&!retired.has(e.event_id)).map(e=>({event_id:e.event_id,icd10:e.payload.icd10,label:e.payload.label,certainty:e.payload.certainty,recorded_at:e.occurred_at}));
+ return events.filter(e=>e.type==='diagnosis-recorded'&&!retired.has(e.event_id)).map(e=>({event_id:e.event_id,icd10:e.payload.icd10,label:e.payload.label,certainty:e.payload.certainty,system:e.payload.system??null,terminology_version:e.payload.terminology_version??null,recorded_at:e.occurred_at}));
 }
 export function checkPrescription(store,db,id,body,{now,keyDir}) {
  getPatient(store,id);exact(body,['atc','tablets','release_version'],['release_version']);

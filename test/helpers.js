@@ -3,7 +3,7 @@ export const dose = JSON.parse(readFileSync(new URL('../ir/dose_band_example.ir.
 export const predicate = JSON.parse(readFileSync(new URL('../ir/contraindication_example.ir.json',import.meta.url)));
 export const ir = {...dose,nodes:[...dose.nodes,...predicate.nodes]};
 export const clone = x=>structuredClone(x);
-export const ctx = (changes={})=>Object.freeze({active_diagnoses:[{icd10:'B50.9',certainty:'confirmed'}],sex:'F',age_years:30,today:'2026-01-01',weight_kg:12,pregnant:false,proposed_atc:'P01BF01',proposed_tablets:2,...changes});
+export const ctx = (changes={})=>Object.freeze({active_diagnoses:[{icd10:'B50.9',certainty:'confirmed',terminology_version:'seed-placeholder-2026'}],sex:'F',age_years:30,today:'2026-01-01',weight_kg:12,pregnant:false,proposed_atc:'P01BF01',proposed_tablets:2,...changes});
 
 import { mkdtempSync,writeFileSync,rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

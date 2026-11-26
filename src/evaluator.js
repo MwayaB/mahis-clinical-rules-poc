@@ -13,6 +13,7 @@ export function evaluate(loadedPackage, ctx) {
   if(a.age_years&&ctx.age_years!=null&&(ctx.age_years<a.age_years.min||ctx.age_years>a.age_years.max)) continue;
   if(a.icd10!==undefined) {
    const diagnoses=(ctx.active_diagnoses??[]).filter(d=>['confirmed','presumptive'].includes(d.certainty));
+   if(ctx.terminology_changed||diagnoses.some(d=>d.terminology_version!==loadedPackage.manifest.terminology_version)) {add(n,'warn',`terminology changed; cannot check ${n.id}`);continue;}
    if(!diagnoses.length) {add(n,'warn',`no indication recorded; cannot check ${n.id}`);continue;}
    if(!diagnoses.some(d=>d.icd10.startsWith(a.icd10))) continue;
   }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { evaluate } from '../src/evaluator.js';
 import { projectRules } from '../src/compiler.js';
 import { ir,ctx } from './helpers.js';
-const pkg={rules:projectRules(ir),manifest:{package_version:'poc-0.1.0',contains_placeholders:true},engine_version:'0.1.0'};
+const pkg={rules:projectRules(ir),manifest:{package_version:'poc-0.1.0',contains_placeholders:true,terminology_version:'seed-placeholder-2026'},engine_version:'0.1.0'};
 for(const [name,changes,severities] of [
  ['correct dose',{proposed_tablets:1},[]],['wrong dose',{},['warn']],['missing weight',{weight_kg:null},['warn']],['outside coverage',{weight_kg:35},['warn']],['below coverage',{weight_kg:4},['warn']],
  ['predicate match',{proposed_atc:'J01XX01',pregnant:true},['block']],['predicate mismatch',{proposed_atc:'J01XX01',pregnant:false},[]],['predicate missing',{proposed_atc:'J01XX01',pregnant:null},['warn']],

@@ -10,7 +10,8 @@
       "active_diagnoses": [
         {
           "icd10": "B50.9",
-          "certainty": "confirmed"
+          "certainty": "confirmed",
+          "terminology_version": "seed-placeholder-2026"
         }
       ]
     },
@@ -29,7 +30,8 @@
       "active_diagnoses": [
         {
           "icd10": "B50.9",
-          "certainty": "confirmed"
+          "certainty": "confirmed",
+          "terminology_version": "seed-placeholder-2026"
         }
       ]
     },

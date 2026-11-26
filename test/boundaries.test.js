@@ -10,7 +10,7 @@ for(const variant of ['example','alternate inclusion']) {
   // Independent interval oracle derives expectations solely from declared endpoints.
   const matches=n.bands.filter(s=>(s.min_inclusive?x>=s.min:x>s.min)&&(s.max_inclusive?x<=s.max:x<s.max));
   assert.ok(matches.length<=1);
-  const pkg={rules:[n],manifest:{package_version:'test',contains_placeholders:true},engine_version:'0.1.0'};
+  const pkg={rules:[n],manifest:{package_version:'test',contains_placeholders:true,terminology_version:'seed-placeholder-2026'},engine_version:'0.1.0'};
   for(const tablets of [0,1,2,3]) {const r=evaluate(pkg,ctx({weight_kg:x,proposed_tablets:tablets}));assert.equal(r.advice.length,matches.length&&matches[0].value===tablets?0:1);}
  });
 }

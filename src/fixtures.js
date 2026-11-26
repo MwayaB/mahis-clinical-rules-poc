@@ -1,3 +1,4 @@
+import { defaultTerminology } from './terminology.js';
 import { exact,ApiError } from './prototype/store.js';
 import { getNode } from './review.js';
 import { projectRules,fixtureGate } from './compiler.js';
@@ -45,7 +46,7 @@ export function generateBoundaries(nodes) {
  for(const n of nodes.filter(n=>n.type==='table')) for(const [index,b] of n.bands.entries()) for(const x of [b.min,b.min-0.01,b.max-0.01,b.max]) {
   if(!Number.isFinite(x)||!Number.isSafeInteger(b.value)) continue;
   for(const tablets of [b.value,b.value+1]) {
-   const ctx={sex:n.applies_to.sex??'F',age_years:n.applies_to.age_years?.min??30,active_diagnoses:n.applies_to.icd10?[{icd10:n.applies_to.icd10,certainty:'confirmed'}]:[],today:'2026-01-01',weight_kg:x,pregnant:false,proposed_atc:n.applies_to.atc,proposed_tablets:tablets};
+   const ctx={sex:n.applies_to.sex??'F',age_years:n.applies_to.age_years?.min??30,active_diagnoses:n.applies_to.icd10?[{icd10:n.applies_to.icd10,certainty:'confirmed',terminology_version:defaultTerminology.terminology_version}]:[],today:'2026-01-01',weight_kg:x,pregnant:false,proposed_atc:n.applies_to.atc,proposed_tablets:tablets};
    fixtures.push({name:`PLACEHOLDER boundary ${n.id} band ${index} weight ${x} tablets ${tablets}`,ctx,expect:expectedIds(nodes,ctx)});
   }
  }

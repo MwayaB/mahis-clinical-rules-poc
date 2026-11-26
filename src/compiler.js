@@ -1,3 +1,4 @@
+import { defaultTerminology } from './terminology.js';
 import { evaluate } from './evaluator.js';
 import { mkdirSync, writeFileSync, renameSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -9,15 +10,15 @@ export const sha256 = bytes=>createHash('sha256').update(bytes).digest('hex');
 export function projectRules(ir) {
  return ir.nodes.map(n=>Object.fromEntries(['id','type',...(n.type==='table'?tableFields:predicateFields)].map(k=>[k,n[k]]).concat([['source_ref',`${ir.document.id}:p${n.source.page}:${n.id}`]])));
 }
-function fixtureAdvice(rules,ctx) {
- return evaluate({rules,manifest:{package_version:'fixture',contains_placeholders:true},engine_version:ENGINE_VERSION},Object.freeze(ctx)).advice.map(n=>n.rule_id).sort();
+function fixtureAdvice(rules,ctx,terminology) {
+ return evaluate({rules,manifest:{package_version:'fixture',contains_placeholders:true,terminology_version:terminology.terminology_version},engine_version:ENGINE_VERSION},Object.freeze(ctx)).advice.map(n=>n.rule_id).sort();
 }
-export function fixtureGate(rules,fixtures) {
+export function fixtureGate(rules,fixtures,terminology=defaultTerminology) {
  if(!Array.isArray(fixtures)) throw new Error('Fixtures must be an array');
  const counts=new Map(rules.map(n=>[n.id,{positive:0,negative:0}]));
  for(const f of fixtures) {
   if(!f||Object.keys(f).some(k=>!['name','ctx','expect'].includes(k))||typeof f.name!=='string'||!Array.isArray(f.expect)||new Set(f.expect).size!==f.expect.length||f.expect.some(id=>!counts.has(id))) throw new Error('Invalid fixture '+f?.name);
-  const actual=fixtureAdvice(rules,f.ctx);
+  const actual=fixtureAdvice(rules,f.ctx,terminology);
   if(canonicalStringify(actual)!==canonicalStringify([...f.expect].sort())) throw new Error('Fixture mismatch '+f.name+': '+rules.map(n=>n.id).join(', '));
   for(const n of rules) if(f.ctx.proposed_atc===n.applies_to.atc) {
    const a=n.applies_to;
@@ -29,14 +30,14 @@ export function fixtureGate(rules,fixtures) {
  }
  for(const [id,c] of counts) if(!c.positive||!c.negative) throw new Error(`${id}: positive and negative applicable fixtures required`);
 }
-export function compile(ir,{dir,privateKey,fixtures,packageVersion='poc-0.1.0'}) {
- const errors=validateIR(ir);
+export function compile(ir,{dir,privateKey,fixtures,packageVersion='poc-0.1.0',terminology=defaultTerminology}) {
+ const errors=validateIR(ir,terminology);
  for(const n of ir?.nodes??[]) if(n.status==='draft') errors.push(`${n.id}: draft refused`);
  if(errors.length) throw new Error(errors.join('\n'));
  if(!/^poc-(?:demo-)?\d+\.\d+\.\d+$/.test(packageVersion)) throw new Error('Invalid package version');
- const rules=projectRules(ir); fixtureGate(rules,fixtures);
+ const rules=projectRules(ir); fixtureGate(rules,fixtures,terminology);
  const rulesBytes=Buffer.from(canonicalStringify(rules));
- const manifest={package_version:packageVersion,ir_version:'0.1',engine_min_version:ENGINE_VERSION,contains_placeholders:ir.nodes.some(n=>n.placeholder),source_documents:[ir.document],rules_sha256:sha256(rulesBytes),node_count:rules.length};
+ const manifest={package_version:packageVersion,terminology_version:terminology.terminology_version,ir_version:'0.1',engine_min_version:ENGINE_VERSION,contains_placeholders:ir.nodes.some(n=>n.placeholder),source_documents:[ir.document],rules_sha256:sha256(rulesBytes),node_count:rules.length};
  const manifestBytes=Buffer.from(canonicalStringify(manifest));
  const key=privateKey?.type==='private'?privateKey:createPrivateKey(privateKey);
  if(key.asymmetricKeyType!=='ed25519') throw new Error('Ed25519 private key required');
