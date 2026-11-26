@@ -24,8 +24,8 @@ async function fixtureEditor(entry) {
  const n=entry.node,f=await api('/api/fixtures?node='+encodeURIComponent(n.id)),box=el('details',{class:'fixture-editor'},el('summary',{},`Authored fixtures · ${f.entries.length} saved${f.stale?' · STALE — save for current revision':''}`));
  const edit=el('form',{method:'post',action:'/api/fixtures','aria-label':'Fixtures for '+n.id}),rows=el('div'),controls=[];
  function add(data={name:'',ctx:{},expect:[]}) {
-  const prefix=n.id+'-fixture-'+controls.length,row=el('div',{class:'card compact'}),c={row};
-  for(const [key,label,value,type] of [['name','Fixture name',data.name,'text'],['today','Today (YYYY-MM-DD)',data.ctx.today??'','date'],['weight_kg','Weight kg (blank means not recorded)',data.ctx.weight_kg??'','number'],['proposed_atc','Proposed ATC (blank means not recorded)',data.ctx.proposed_atc??'','text'],['proposed_tablets','Proposed tablet count (blank means not recorded)',data.ctx.proposed_tablets??'','number'],['expect','Expected rule IDs (comma separated; blank means no advice)',data.expect.join(', '),'text']]) {
+  const prefix=n.id+'-fixture-'+controls.length,row=el('div',{class:'card compact'}),c={row,original:data.ctx};
+  for(const [key,label,value,type] of [['name','Fixture name',data.name,'text'],['sex','Sex (blank means not recorded)',data.ctx.sex??'','text'],['age_years','Age years (blank means not recorded)',data.ctx.age_years??'','number'],['active_diagnoses','Active diagnoses (JSON array)',JSON.stringify(data.ctx.active_diagnoses??[]),'text'],['today','Today (YYYY-MM-DD)',data.ctx.today??'','date'],['weight_kg','Weight kg (blank means not recorded)',data.ctx.weight_kg??'','number'],['proposed_atc','Proposed ATC (blank means not recorded)',data.ctx.proposed_atc??'','text'],['proposed_tablets','Proposed tablet count (blank means not recorded)',data.ctx.proposed_tablets??'','number'],['expect','Expected rule IDs (comma separated; blank means no advice)',data.expect.join(', '),'text']]) {
    const control=input(prefix+'-'+key,label,value,type,{...(type==='number'?{step:'any'}:{}),...(['name','today'].includes(key)?{required:true}:{})});c[key]=control.querySelector('input');row.append(control);
   }
   const preg=selectField(prefix+'-pregnant','Pregnancy input',[['null','Not recorded'],['true','Pregnant'],['false','Not pregnant']],String(data.ctx.pregnant??null));c.pregnant=preg.querySelector('select');row.append(preg);controls.push(c);rowButtons(row,rows);
@@ -35,7 +35,7 @@ async function fixtureEditor(entry) {
  const loadButton=el('button',{type:'button',class:'secondary'},'Load sample fixtures');action(loadButton,async()=>{const sample=await api('/api/sample-bundle');if(sample.document_sha256!==sha) throw Error('Sample fixtures apply only to the shipped sample PDF');rows.replaceChildren();controls.length=0;(sample.fixtures[entry.block.id]??[]).forEach(add);notice('Sample fixture entries loaded. Save them to attach to this content revision.');});
  edit.append(rows,el('div',{class:'toolbar'},addButton,loadButton,el('button',{type:'submit'},'Save fixtures')));
  form(edit,async()=>{
-  const entries=controls.filter(c=>c.row.isConnected).map(c=>({name:c.name.value,ctx:{today:c.today.value,weight_kg:c.weight_kg.value===''?null:Number(c.weight_kg.value),pregnant:c.pregnant.value==='null'?null:c.pregnant.value==='true',proposed_atc:c.proposed_atc.value||null,proposed_tablets:c.proposed_tablets.value===''?null:Number(c.proposed_tablets.value)},expect:c.expect.value.split(',').map(s=>s.trim()).filter(Boolean)}));
+  const entries=controls.filter(c=>c.row.isConnected).map(c=>({name:c.name.value,ctx:{...c.original,sex:c.sex.value||null,age_years:c.age_years.value===''?null:Number(c.age_years.value),active_diagnoses:JSON.parse(c.active_diagnoses.value),today:c.today.value,weight_kg:c.weight_kg.value===''?null:Number(c.weight_kg.value),pregnant:c.pregnant.value==='null'?null:c.pregnant.value==='true',proposed_atc:c.proposed_atc.value||null,proposed_tablets:c.proposed_tablets.value===''?null:Number(c.proposed_tablets.value)},expect:c.expect.value.split(',').map(s=>s.trim()).filter(Boolean)}));
   await api('/api/fixtures',{node_id:n.id,entries});notice('Authored fixtures saved for current content.');await refreshNodes();
  });
  box.append(el('p',{class:'muted'},'At least one matching and one non-matching case with complete inputs are required. Generated boundaries do not replace authored cases.'),edit,el('details',{},el('summary',{},`${f.generated.length} generated boundary checks (read only)`),el('pre',{class:'hash'},json(f.generated))));return box;
@@ -45,11 +45,21 @@ async function nodeCard(entry) {
  box.append(el('div',{class:'section-heading'},el('h2',{},`${n.type==='table'?'Weight table':'Pregnancy predicate'} · ${entry.block.id}`),el('span',{class:'badge'},`${n.status} · ${entry.approvals.length} of 2 approvals`)));
  if(n.parse_errors?.length) right.append(el('div',{class:'parse-errors'},el('strong',{},'Parse errors'),el('ul',{},n.parse_errors.map(e=>el('li',{},e)))));
  const edit=el('form',{method:'post',action:`/api/ir/${n.id}/edit`,'aria-label':'Edit '+entry.block.id}),atc=input(n.id+'-atc','ATC code (required)',n.applies_to.atc,'text',{required:true}),message=field(n.id+'-message','Placeholder advice message',el('textarea',{rows:3,required:true},n.message_template??n.message));
- edit.append(atc);const structured=n.type==='table'?bandEditor(n):whenEditor(n);edit.append(structured.view);
+ const applicable=el('fieldset',{},el('legend',{},'Applicability · checked before conditions'));
+ const sex=selectField(n.id+'-sex','Patient sex',[['','Any'],['F','Female'],['M','Male'],['U','Unknown / unspecified']],n.applies_to.sex??'');
+ const minAge=input(n.id+'-age-min','Minimum age (years, inclusive)',n.applies_to.age_years?.min??'','number',{min:0,max:120,step:'any'}),maxAge=input(n.id+'-age-max','Maximum age (years, inclusive)',n.applies_to.age_years?.max??'','number',{min:0,max:120,step:'any'});
+ const indication=input(n.id+'-icd10','ICD-10 indication prefix (optional)',n.applies_to.icd10??'');
+ applicable.append(atc,sex,minAge,maxAge,indication);edit.append(applicable,el('p',{class:'muted'},'Sex, age and indication belong in Applicability. Conditions accept pregnant, weight_kg, proposed_atc, proposed_tablets and today.'));
+ const structured=n.type==='table'?bandEditor(n):whenEditor(n);edit.append(structured.view);
  let severity;if(n.type==='predicate') {severity=selectField(n.id+'-severity','Severity',[['block','Block'],['warn','Warning'],['info','Information']],n.severity);edit.append(severity);}
  edit.append(message,el('button',{type:'submit'},'Save edit'));
  form(edit,async()=>{
-  const body={applies_to:{atc:atc.querySelector('input').value}};
+  const applies_to={...n.applies_to,atc:atc.querySelector('input').value};
+  const sexValue=sex.querySelector('select').value,lo=minAge.querySelector('input').value,hi=maxAge.querySelector('input').value,code=indication.querySelector('input').value.trim();
+  if(sexValue) applies_to.sex=sexValue;else delete applies_to.sex;
+  if(lo===''&&hi==='') delete applies_to.age_years;else {if(lo===''||hi==='') throw Error('Supply both minimum and maximum applicability ages');applies_to.age_years={min:Number(lo),max:Number(hi)};}
+  if(code) applies_to.icd10=code;else delete applies_to.icd10;
+  const body={applies_to};
   if(n.type==='table') {body.bands=structured.value();body.message_template=message.querySelector('textarea').value;}else{body.when=structured.value();body.severity=severity.querySelector('select').value;body.message=message.querySelector('textarea').value;}
   await api(`/api/ir/${n.id}/edit`,body,{headers:{'Content-Type':'application/json','X-User':$('editor').value}});notice('Revision saved. Previous approvals reset.');await refreshNodes();
  });
