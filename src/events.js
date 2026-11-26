@@ -4,7 +4,7 @@ import { fields,nonempty } from './ir.js';
 const shapes={
  'patient-registered':['name','sex'], 'observation-recorded':['field','value'], 'status-recorded':['field','value'],
  'diagnosis-recorded':['icd10','label','certainty'], 'prescription-drafted':['atc','tablets'],
- 'advice-shown':['rule_ids','severities','package_version','engine_version','inputs_hash','context_up_to_seq','rules_sha256','manifest_sha256','advice'],
+ 'advice-shown':['rule_ids','severities','package_version','engine_version','inputs_hash','context_up_to_seq','rules_sha256','manifest_sha256','today','advice'],
  'advice-response':['advice_ref','action','reason']
 };
 export function validDay(s) {
@@ -33,7 +33,7 @@ export function openEventLog(path) {
      case 'diagnosis-recorded': if(!nonempty(p.icd10)||!nonempty(p.label)||!['suspected','confirmed'].includes(p.certainty)) errors.push('Invalid diagnosis');break;
      case 'prescription-drafted': if(p.atc!==null&&!nonempty(p.atc)||p.tablets!==null&&(!Number.isInteger(p.tablets)||p.tablets<0)) errors.push('Invalid prescription');break;
      case 'advice-shown': {
-      if(!Array.isArray(p.rule_ids)||!p.rule_ids.every(nonempty)||!Array.isArray(p.severities)||p.severities.some(x=>!['block','warn','info'].includes(x))||p.rule_ids.length!==p.severities.length||!nonempty(p.package_version)||!nonempty(p.engine_version)||![p.inputs_hash,p.rules_sha256,p.manifest_sha256].every(x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x))||!Number.isSafeInteger(p.context_up_to_seq)||p.context_up_to_seq<0||!Array.isArray(p.advice)) errors.push('Invalid advice audit');
+      if(!validDay(p.today)||!Array.isArray(p.rule_ids)||!p.rule_ids.every(nonempty)||!Array.isArray(p.severities)||p.severities.some(x=>!['block','warn','info'].includes(x))||p.rule_ids.length!==p.severities.length||!nonempty(p.package_version)||!nonempty(p.engine_version)||![p.inputs_hash,p.rules_sha256,p.manifest_sha256].every(x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x))||!Number.isSafeInteger(p.context_up_to_seq)||p.context_up_to_seq<0||!Array.isArray(p.advice)) errors.push('Invalid advice audit');
       else {
        const prior=Number(sql.prepare('SELECT coalesce(max(seq),0) AS seq FROM events WHERE patient_id=?').get(event.patient_id).seq);
        if(p.context_up_to_seq!==prior) errors.push('Advice cutoff must be patient predecessor');

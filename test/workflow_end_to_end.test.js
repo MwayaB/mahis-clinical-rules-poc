@@ -1,0 +1,15 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync,readFileSync,writeFileSync,rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { generateKeyPairSync } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { compile } from '../src/compiler.js';
+import { openEventLog } from '../src/events.js';
+import { register,observe,prescribe } from '../src/workflow.js';
+import { environment } from './helpers.js';
+test('register observe prescribe warning then correction and no advice',t=>{const s=environment(t);observe({...s.args(),field:'weight_kg',value:12});const a=s.rx();assert.equal(a.result.advice[0].severity,'warn');assert.equal(a.exitCode,0);assert.equal(s.db.listForPatient('P1').at(-2).type,'prescription-drafted');assert.equal(s.db.listForPatient('P1').at(-1).type,'advice-shown');observe({...s.args(),field:'weight_kg',value:10});assert.deepEqual(s.rx({tablets:1}).result.advice,[]);});
+test('missing weight and proposal inputs visibly warn; block still records prescription',t=>{const s=environment(t);assert.match(s.rx().result.advice[0].message,/weight_kg not recorded/);assert.match(s.rx({atc:null}).result.advice[0].message,/proposed_atc/);assert.match(s.rx({tablets:null}).result.advice.map(x=>x.message).join(' '),/proposed_tablets/);s.db.append({event_id:'pregnancy',patient_id:'P1',type:'status-recorded',payload:{field:'pregnant',value:true},occurred_at:s.args().occurredAt});const r=s.rx({atc:'J01XX01'});assert.equal(r.exitCode,2);assert.ok(s.db.listForPatient('P1').some(e=>e.event_id===r.draft.event_id));});
+test('invalid or untrusted prescription leaves no partial events',t=>{const s=environment(t),before=s.db.listForPatient('P1');assert.throws(()=>s.rx({tablets:NaN}));assert.throws(()=>s.rx({trustedPublicKeys:[]}));assert.deepEqual(s.db.listForPatient('P1'),before);});
+test('CLI block exit code and missing weight warning',t=>{const s=environment(t);const cli=new URL('../src/cli.js',import.meta.url).pathname;const run=(...a)=>spawnSync(process.execPath,[cli,...a,'--db',join(s.root,'events.db'),'--patient-id','P1'],{encoding:'utf8'});const r=run('prescribe','--atc','P01BF01','--tablets','2','--package',s.dir,'--pubkey',s.pub);assert.equal(r.status,0,r.stderr);assert.match(r.stdout,/weight_kg not recorded/);assert.equal(run('status','--field','pregnant','--value','true').status,0);const blocked=run('prescribe','--atc','J01XX01','--tablets','1','--package',s.dir,'--pubkey',s.pub);assert.equal(blocked.status,2,blocked.stderr);assert.ok(JSON.parse(blocked.stdout).shown);assert.equal(run('status','--field','pregnant','--value','no').status,1);});
