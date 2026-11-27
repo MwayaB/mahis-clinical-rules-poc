@@ -18,9 +18,9 @@ This project asks whether guideline rules for MaHIS can be authored and reviewed
 
 ## Proof-of-concept scope
 
-The proof of concept demonstrates two rule types—weight-based dosing and pregnancy contraindications—with placeholder values and one simulated EMR screen. It implements reviewed rule authoring, signed and versioned packages, deterministic evaluation, and recorded advice that can be replayed against the exact package used.
+The proof of concept demonstrates weight-based dosing, pregnancy contraindications and scored triage with placeholder values and one simulated EMR screen. It implements reviewed rule authoring, signed and versioned packages, deterministic evaluation, and recorded advice that can be replayed against the exact package used.
 
-It does not demonstrate integration with existing programme systems, extraction from real guideline PDFs, triage, clinical validation, Ministry governance, or distribution to facility nodes. Those remain future work. The architecture separates authoring, compilation and evaluation to accommodate those extensions; compatibility with real programme systems has not been established.
+It does not demonstrate integration with existing programme systems, extraction from real guideline PDFs, real-chart triage validation, clinical validation, Ministry governance, or distribution to facility nodes. Those remain future work. The architecture separates authoring, compilation and evaluation to accommodate those extensions; compatibility with real programme systems has not been established.
 
 **Every clinical value, patient, drug code, diagnosis label and expected clinical outcome is a PLACEHOLDER, NOT CLINICAL GUIDANCE.** Digitisation is a mock; uploaded PDFs are stored and hashed, never read or interpreted. This is a local demonstration with no authentication or clinical validation.
 
@@ -215,7 +215,7 @@ CLI commands take `--db FILE --patient-id ID` plus the following arguments:
 
 Built and committed in the required working order: canonical JSON; IR validation; compiler; package verification; evaluator; events/context; CLI/workflow/replay; scripts/documentation. The complete suite was run after every part. The final suite and demonstration results are recorded in `VALIDATION.md`.
 
-Implementation limits: inclusive maximum coverage is not expressible under the documented conservative convention; source provenance cannot be authenticated without real source documents; replay requires retained historical packages. The original core has no production clinical validation, deployment, sync, LLM, FHIR support or additional rule node types. The local HTTP server and UI added in the prototype phase are described above.
+Implementation limits: inclusive maximum coverage is not expressible under the documented conservative convention; source provenance cannot be authenticated without real source documents; replay requires retained historical packages. There is no production clinical validation, deployment, sync, LLM or FHIR support. Supported node types are table, predicate and scored_triage. The local HTTP server and UI added in the prototype phase are described above.
 
 ## Data-quality guards
 
@@ -236,3 +236,46 @@ Legacy diagnosis events without version metadata remain unchanged and produce te
 The one-page `samples/dose-guide/placeholder.pdf` contains guideline material only: malaria indication and existing three weight bands, pregnancy restriction for women aged 12–50, and a separate pneumonia dose table. Its ATC and ICD-10 identifiers are written in the guideline itself. No patient scenarios, software workflow instructions or data-quality implementation notes are included in the PDF.
 
 `samples/dose-guide/source.json` is the authoring data. `scripts/generate-sample-pdf.py` regenerates the PDF, content hash, exact digitisation fixture and sample fixture IDs using ReportLab (authoring-time Python tooling only; no npm dependencies). Drafting parses explicit text annotations and preserves their source text. Generic tables without an indication do not acquire one from a template. Clinicians never select individual rules in the EMR; approved rules apply automatically from the patient facts and proposed drug. Sample IRs under `ir/` remain independently authored placeholder test inputs.
+
+## Triage
+
+Scored triage is decision support for the person doing triage. It records a category and never prevents clinical action. **Every threshold, point value and category label in the single sample rule is invented and marked `placeholder: true`; none is taken from a real chart.** Real parameters and values must come from the reviewed, Ministry-approved chart through the existing two-reviewer approval, fixture and signed-release gate. The prototype does not establish Ministry governance or clinical validity.
+
+`ir/triage_example.ir.json` defines the adult sample. It scores respiratory rate and AVPU using explicit numeric bands and ordinal points; score bands and priority overrides produce a category. All five encounter fields—respiratory rate, pulse, temperature, SpO2 and AVPU—can be recorded, but only the two parameters declared in this sample contribute to its score. AVPU is stored as a string enumeration, never converted to a numeric rank.
+
+- **Scored:** the API returns the category, total score, component values/points/band IDs, fired rule overrides, package/engine versions and input hash. The EMR displays the returned result; it does not calculate it.
+- **Incomplete:** any required parameter missing yields `Cannot triage: missing …`. No score, category or category colour is produced, even if the available inputs would trigger a rule override.
+- **Invalid:** an input outside the rule's coverage or ordinal enumeration yields the input and value, with no score or category. Inputs are not clamped.
+- **Clinician override:** a scored result can be overridden with a permitted category and a nonempty reason. This creates a separate linked event and preserves the original result. Changed observations require rescoring first. An incomplete or invalid result cannot be turned into a scored result by an override.
+
+Observations belong to an `encounter_id`. Latest non-superseded values are projected only from that encounter; corrections cannot cross encounters. Every evaluation, including incomplete and invalid results, is recorded with package identity, context cutoff and input hash. Replay uses the exact retained signed package and historical encounter context. Starting another encounter or recording new observations clears the current header category until a new result is recorded. Historical results remain visible as history.
+
+Entry guards are separate data-quality limits: respiratory rate 0–100/min, pulse 0–300/min, temperature 25–45 C, SpO2 0–100%, and the four declared AVPU strings. They are not clinical thresholds. In particular, respiratory rate **100 passes the inclusive entry guard but is invalid for the sample's exclusive `[0,100)` scoring coverage**. These requested example limits are not a clinically validated range.
+
+### Run the triage demo
+
+Run `bash scripts/prototype-demo.sh` with Node 22+. After the dose and pregnancy checks, it imports the authored sample against its placeholder chart PDF, obtains two reviewer approvals, saves triage fixtures and creates a separate signed triage release. It uses the **adult** patient because the supplied sample scope is adult-only. Four vitals are recorded first; missing AVPU produces an incomplete result. Recording AVPU produces the scored category, followed by a reasoned clinician override and replay. The child is never scored using the adult rule.
+
+In the EMR, select a signed triage release, select the appropriate rule population and choose **Start encounter**. Save available vitals, then **Score triage**. Missing fields display `not recorded`; blanks do not become zero. The patient header shows the API's current category. The result includes a component table, and the event history shows original results and clinician overrides together.
+
+The chart is `samples/triage/placeholder.pdf`; it contains guideline-style chart content only. Its values are rendered from the one IR sample by `scripts/generate-triage-pdf.py`. For manual authoring, upload that source PDF and set metadata, open Review, and use **Import authored triage rule**. Imports are drafts, not approvals. The structured JSON editor, two independent reviewers, authored fixtures and release checks all remain in force; there is no automatic extraction from the PDF.
+
+### Triage API
+
+| Route | Purpose |
+| --- | --- |
+| `POST /api/triage/drafts` | Import `{document_sha256,node}` as a reviewed draft workflow |
+| `GET /api/triage/sample` | Authored placeholder sample and test fixtures |
+| `GET /api/triage/config?release_version=...` | Entry field definitions and rule populations/categories from a verified release |
+| `POST /api/encounters` | Open `{patient_id,population}` and return `encounter_id` |
+| `GET /api/encounters/:id` | Encounter inputs, history and current result |
+| `POST /api/encounters/:id/observations` | Record `{field,value,supersedes?}` with entry guards |
+| `POST /api/encounters/:id/triage` | Score `{release_version}` and record every result |
+| `POST /api/encounters/:id/triage/override` | Record `{category,reason,triage_ref?}` without changing the original |
+| `POST /api/events/:seq/replay` | Replay prescription advice or a triage result against its recorded package |
+
+Multiple scope-matching nodes return results sorted by node ID. The API supplies a highest-category display only when every result is scored and their category orders are comparable. Otherwise the UI retains the individual results rather than inventing a shared ranking. UI colours are fixed demonstration styling, not Ministry-defined priority or colour mappings.
+
+Not covered: the real chart's parameters and thresholds, paediatric/adult clinical variants, automatic age-to-population classification, Ministry-defined colours or priorities, or clinical validation against patient outcomes. Population is explicitly selected when opening an encounter. The supplied score band's upper endpoint of 99 exceeds the sample's maximum attainable score of 6; fixtures cover all attainable score edges and respiratory boundaries without inventing a second sample rule.
+
+See [TRIAGE.md](TRIAGE.md) for the implementation report, test evidence and verification limits.
