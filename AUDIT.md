@@ -274,3 +274,11 @@ Every suite includes the unchanged evaluator purity test. Both standalone and cu
 ## Public repository preparation
 
 The README now leads with the MaHIS problem statement, distinguishes the implemented proof of concept from future programme integration/distribution, and removes machine-specific setup paths. Sample mirror files and their documentation match the current guideline PDF and fixtures. ATC prescription entry now rejects labels such as `ATC J01XX01` with HTTP 422 rather than silently finding no rule; the exact `J01XX01` code still produces the applicable pregnancy advice. Regression coverage verifies no partial events on rejected entry. Full suite: 156 passing, zero skipped. Local databases and signing keys remain ignored and are not part of tracked history.
+
+## Pregnancy status and historical release signatures
+
+A demo run failed during pregnancy-status entry because `recordStatus` loaded every historical release to collect age restrictions. Read-only inspection confirmed that `data/prototype-demo` release `poc-demo-0.2.0` verifies with the current development key, while `poc-demo-0.1.0` does not. The unrelated old release therefore blocked entry even though the active demo release was valid.
+
+`src/emr.js` now verifies only an optional explicitly selected `release_version` for status applicability. `public/emr.js` and `scripts/prototype-flow.js` send that selected version. No selected version retains the existing documented sample-rule fallback. Selecting an unverifiable package returns an explicit HTTP 409 naming the release; verification is not bypassed. Historical releases, databases and keys were not changed or re-signed. README guard/API documentation reflects the new selection scope.
+
+`test/prototype/status_release.test.js` reproduces a historical release signed with a different key, verifies it remains rejected, checks unselected and healthy-selected status entry, checks failure without partial writes when the bad release is selected, and retains the narrower age-range check. Full suite: **219 passed, zero skipped**, including the dose/triage demo and purity checks.

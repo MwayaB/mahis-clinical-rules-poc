@@ -95,7 +95,7 @@ All JSON mutation bodies use `Content-Type: application/json`. Digitise and repl
 | `GET /api/patients`, `POST /api/patients` | Create with `{name,sex,age_years?,patient_id?}` |
 | `GET /api/patients/:id/context` | Observation projection with dates/nulls |
 | `POST /api/patients/:id/observations` | `{field:"weight_kg",value,supersedes?}` |
-| `POST /api/patients/:id/status` | `{field:"pregnant",value,supersedes?}` |
+| `POST /api/patients/:id/status` | `{field:"pregnant",value,supersedes?,release_version?}` |
 | `GET /api/patients/:id/diagnoses`, `POST /api/patients/:id/diagnoses` | Save `{icd10,label,certainty?}`; list active coded diagnoses |
 | `POST /api/patients/:id/prescriptions/check` | `{release_version,atc?,tablets?}`; missing indication warns without blocking |
 | `GET /api/patients/:id/events` | Ordered clinical audit events |
@@ -219,7 +219,7 @@ Implementation limits: inclusive maximum coverage is not expressible under the d
 
 ## Data-quality guards
 
-`src/plausibility.js` defines entry guards, separate from clinical rule content. They reject implausible recorded data with HTTP 422 and a field/limit message; these bounds are not clinical limits or dosing recommendations. Age is optional at registration and stays null when missing. Recording pregnancy true requires eligible recorded sex and age. The status API intersects the global range with pregnancy ranges in published releases (all releases, conservatively); workflow/CLI use the sample pregnancy rule when no rules are supplied. False pregnancy status remains recordable without inferring eligibility. Unknown observation/status fields remain rejected by the existing event allowlists.
+`src/plausibility.js` defines entry guards, separate from clinical rule content. They reject implausible recorded data with HTTP 422 and a field/limit message; these bounds are not clinical limits or dosing recommendations. Age is optional at registration and stays null when missing. Recording pregnancy true requires eligible recorded sex and age. The status API uses pregnancy ranges from the explicitly selected, verified release (`release_version`), rather than scanning historical releases. The EMR submits its selected release. With no release supplied, workflow/CLI use the sample pregnancy rule as the documented demo fallback. An unverifiable selected release still fails closed; an unrelated historical release does not block status entry. False pregnancy status remains recordable without inferring eligibility. Unknown observation/status fields remain rejected by the existing event allowlists.
 
 Run the corrected standalone demo with Node 22+: `bash scripts/demo.sh`. It prints child age 4 / 15 kg advice before diagnosis, after confirmed malaria with an incorrect dose, after correction, then a separate adult age 30 pregnancy block. `scripts/prototype-demo.sh` runs the same scenarios through curl and the API.
 

@@ -1,0 +1,25 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { generateKeyPairSync } from 'node:crypto';
+import { httpEnvironment,releasedHTTP } from './support.js';
+import { compile } from '../../src/compiler.js';
+import { loadRelease } from '../../src/release.js';
+import { ir } from '../helpers.js';
+test('an unrelated historical release signed by another key cannot block pregnancy status',async t=>{
+ const s=await httpEnvironment(t);await releasedHTTP(s);
+ const oldVersion='poc-demo-0.0.9',fixtures=['dose_band_example','contraindication_example'].flatMap(name=>JSON.parse(readFileSync(new URL('../../fixtures/'+name+'.fixtures.json',import.meta.url))));
+ compile(ir,{dir:join(s.app.store.root,'releases',oldVersion),privateKey:generateKeyPairSync('ed25519').privateKey,fixtures,packageVersion:oldVersion});
+ const healthy=JSON.parse(s.app.store.db.prepare('SELECT record FROM releases WHERE version=?').get('poc-demo-0.1.0').record);
+ s.app.store.db.prepare('INSERT INTO releases VALUES(?,?)').run(oldVersion,s.app.store.encode({...healthy,version:oldVersion}));
+ const keyDir=join(s.root,'keys');assert.throws(()=>loadRelease(s.app.store,oldVersion,{keyDir}),/Signature verification failed/);
+ const p=await s.ok('/api/patients',{name:'PLACEHOLDER adult',sex:'F',age_years:30}),path='/api/patients/'+p.patient_id+'/status';
+ assert.equal((await s.request(path,{field:'pregnant',value:false})).status,200);
+ assert.equal((await s.request(path,{field:'pregnant',value:true,release_version:'poc-demo-0.1.0'})).status,200);
+ const before=await s.ok('/api/patients/'+p.patient_id+'/events');
+ const bad=await s.request(path,{field:'pregnant',value:true,release_version:oldVersion});assert.equal(bad.status,409);assert.match(bad.data.error,/Cannot verify selected release poc-demo-0.0.9.*Signature verification failed/);
+ assert.deepEqual(await s.ok('/api/patients/'+p.patient_id+'/events'),before);
+ const young=await s.ok('/api/patients',{name:'PLACEHOLDER',sex:'F',age_years:10});const range=await s.request('/api/patients/'+young.patient_id+'/status',{field:'pregnant',value:true,release_version:'poc-demo-0.1.0'});assert.equal(range.status,422);assert.match(range.data.error,/12 to 50/);
+ assert.throws(()=>loadRelease(s.app.store,oldVersion,{keyDir}),/Signature verification failed/);
+});

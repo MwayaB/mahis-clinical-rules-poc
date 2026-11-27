@@ -35,7 +35,7 @@ const second=call(patient+'/prescriptions/check',{atc:sample.atc_by_block.b1,tab
 assert.equal(call(`/api/events/${first.shown.seq}/replay`,{}).matches,true);
 const adult=call('/api/patients',{name:'PLACEHOLDER adult pregnancy example',sex:'F',age_years:30}),adultPath='/api/patients/'+adult.patient_id;
 call(adultPath+'/diagnoses',sample.demo_diagnoses.adult);
-call(adultPath+'/status',{field:'pregnant',value:true});const blocked=call(adultPath+'/prescriptions/check',{atc:sample.atc_by_block.b2,tablets:1,release_version:version});assert.equal(blocked.result.advice[0].severity,'block');assert.equal(blocked.exitCode,2);
+call(adultPath+'/status',{field:'pregnant',value:true,release_version:version});const blocked=call(adultPath+'/prescriptions/check',{atc:sample.atc_by_block.b2,tablets:1,release_version:version});assert.equal(blocked.result.advice[0].severity,'block');assert.equal(blocked.exitCode,2);
 // The supplied rule is adult-only. Keep triage on the separate adult, never the demo child.
 const triageUpload=call('/api/guidelines?filename=triage.pdf&document_id='+triageIR.document.id,undefined,{file:fileURLToPath(new URL('../samples/triage/placeholder.pdf',import.meta.url))});
 call(`/api/guidelines/${triageUpload.sha256}/metadata`,{edition:triageIR.document.edition});
