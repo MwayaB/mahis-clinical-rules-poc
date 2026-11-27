@@ -1,0 +1,44 @@
+{
+  "placeholder": true,
+  "fields": [
+    {
+      "input": "resp_rate_per_min",
+      "label": "Respiratory rate / min",
+      "kind": "numeric",
+      "min": 0,
+      "max": 100
+    },
+    {
+      "input": "pulse_per_min",
+      "label": "Pulse / min",
+      "kind": "numeric",
+      "min": 0,
+      "max": 300
+    },
+    {
+      "input": "temp_c",
+      "label": "Temperature (C)",
+      "kind": "numeric",
+      "min": 25,
+      "max": 45
+    },
+    {
+      "input": "spo2_pct",
+      "label": "SpO2 (%)",
+      "kind": "numeric",
+      "min": 0,
+      "max": 100
+    },
+    {
+      "input": "avpu",
+      "label": "AVPU",
+      "kind": "ordinal",
+      "values": [
+        "alert",
+        "voice",
+        "pain",
+        "unresponsive"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "ir_version": "0.1",
+  "document": {
+    "id": "PLACEHOLDER-TRIAGE",
+    "edition": "placeholder-2026",
+    "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "nodes": [
+    {
+      "id": "triage-adult-vitals",
+      "type": "scored_triage",
+      "risk": "high",
+      "scope": {
+        "population": "adult"
+      },
+      "parameters": [
+        {
+          "name": "resp_rate",
+          "input": "resp_rate_per_min",
+          "kind": "numeric",
+          "bands": [
+            {
+              "min": 0,
+              "max": 9,
+              "min_inclusive": true,
+              "max_inclusive": false,
+              "points": 3
+            },
+            {
+              "min": 9,
+              "max": 21,
+              "min_inclusive": true,
+              "max_inclusive": false,
+              "points": 0
+            },
+            {
+              "min": 21,
+              "max": 100,
+              "min_inclusive": true,
+              "max_inclusive": false,
+              "points": 2
+            }
+          ],
+          "coverage": {
+            "min": 0,
+            "max": 100
+          }
+        },
+        {
+          "name": "consciousness",
+          "input": "avpu",
+          "kind": "ordinal",
+          "levels": [
+            {
+              "value": "alert",
+              "points": 0
+            },
+            {
+              "value": "voice",
+              "points": 1
+            },
+            {
+              "value": "pain",
+              "points": 2
+            },
+            {
+              "value": "unresponsive",
+              "points": 3
+            }
+          ]
+        }
+      ],
+      "score_bands": [
+        {
+          "min": 0,
+          "max": 2,
+          "min_inclusive": true,
+          "max_inclusive": true,
+          "category": "standard"
+        },
+        {
+          "min": 3,
+          "max": 4,
+          "min_inclusive": true,
+          "max_inclusive": true,
+          "category": "urgent"
+        },
+        {
+          "min": 5,
+          "max": 99,
+          "min_inclusive": true,
+          "max_inclusive": true,
+          "category": "emergency"
+        }
+      ],
+      "overrides": [
+        {
+          "id": "unresponsive-override",
+          "when": {
+            "avpu": "unresponsive"
+          },
+          "category": "emergency"
+        }
+      ],
+      "categories_order": [
+        "standard",
+        "urgent",
+        "emergency"
+      ],
+      "source": {
+        "page": 1,
+        "bbox": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "text": "placeholder"
+      },
+      "status": "approved",
+      "placeholder": true,
+      "reviewers": [
+        "reviewer-a",
+        "reviewer-b"
+      ]
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+import { triageFields,validateTriage } from './triage-ir.js';
+export { triageFields } from './triage-ir.js';
 import { defaultTerminology,hasPrefix } from './terminology.js';
 import { canonicalStringify } from './canonical.js';
 export const contextFields = ['today','weight_kg','pregnant','proposed_atc','proposed_tablets'];
@@ -18,12 +20,12 @@ export function validateNodes(nodes, { compiled=false,terminology=defaultTermino
  nodes.forEach((n,i)=>{
   const path=typeof n?.id==='string'?n.id:`node[${i}]`;
   const add=m=>errors.push(`${path}: ${m}`);
-  const specific=n?.type==='table'?tableFields:n?.type==='predicate'?predicateFields:[];
+  const specific=n?.type==='table'?tableFields:n?.type==='predicate'?predicateFields:n?.type==='scored_triage'?triageFields:[];
   const base=compiled?['id','type','source_ref']:commonFields;
   if (!fields(n,[...base,...specific],[...base,...specific],path,errors)) return;
   if (!nonempty(n.id)) add('id must be nonempty');
   if (ids.has(n.id)) add('duplicate node ID'); ids.add(n.id);
-  if (!['table','predicate'].includes(n.type)) add('unknown type');
+  if (!['table','predicate','scored_triage'].includes(n.type)) add('unknown type');
   if (compiled) { if (!nonempty(n.source_ref)) add('invalid source_ref'); }
   else {
    if (!['approved','draft'].includes(n.status)) add('unknown status');
@@ -37,6 +39,7 @@ export function validateNodes(nodes, { compiled=false,terminology=defaultTermino
     if(!nonempty(s.text)) add('invalid source.text');
    }
   }
+  if(n.type==='scored_triage') {validateTriage(n,{fields,nonempty,object},errors);return;}
   if(fields(n.applies_to,['atc','sex','age_years','icd10'],['atc'],path+'.applies_to',errors)) {
    const a=n.applies_to;
    // Signed compiled rules retain their release terminology; do not reinterpret with the installed seed.
