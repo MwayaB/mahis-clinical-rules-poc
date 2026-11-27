@@ -1,0 +1,3 @@
+import { test } from 'node:test';import assert from 'node:assert/strict';
+import { assess } from '../../src/evaluator.js';import { cases,context,packageFor } from './support.js';
+for(const c of cases()) test('shared envelope '+c.type.name,()=>{const r=assess(packageFor(c),context(c.node))[0];assert.deepEqual(Object.keys(r).sort(),['node_id','node_type','status','outcome','missing','invalid','payload','package_version','engine_version','inputs_hash'].sort());assert.ok(['ok','advice'].includes(r.status));assert.equal(r.node_type,c.node.type);assert.equal(r.payload.renderer,c.type.renderer);assert.match(r.inputs_hash,/^sha256:[a-f0-9]{64}$/);});

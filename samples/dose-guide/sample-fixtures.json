@@ -18,6 +18,10 @@
       },
       "expect": [
         "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b1"
+      ],
+      "scope": "patient",
+      "kinds": [
+        "positive"
       ]
     },
     {
@@ -36,7 +40,11 @@
           }
         ]
       },
-      "expect": []
+      "expect": [],
+      "scope": "patient",
+      "kinds": [
+        "negative"
+      ]
     }
   ],
   "b2": [
@@ -53,6 +61,10 @@
       },
       "expect": [
         "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b2"
+      ],
+      "scope": "patient",
+      "kinds": [
+        "positive"
       ]
     },
     {
@@ -66,7 +78,11 @@
         "sex": "F",
         "age_years": 30
       },
-      "expect": []
+      "expect": [],
+      "scope": "patient",
+      "kinds": [
+        "negative"
+      ]
     }
   ],
   "b3": [
@@ -88,6 +104,10 @@
       },
       "expect": [
         "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b3"
+      ],
+      "scope": "patient",
+      "kinds": [
+        "positive"
       ]
     },
     {
@@ -106,7 +126,11 @@
           }
         ]
       },
-      "expect": []
+      "expect": [],
+      "scope": "patient",
+      "kinds": [
+        "negative"
+      ]
     }
   ],
   "b4": [
@@ -124,6 +148,11 @@
           "score": 0,
           "category": "standard"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:standard"
       ]
     },
     {
@@ -140,6 +169,11 @@
           "score": 2,
           "category": "standard"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:standard"
       ]
     },
     {
@@ -156,6 +190,11 @@
           "score": 3,
           "category": "urgent"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:urgent"
       ]
     },
     {
@@ -172,6 +211,11 @@
           "score": 4,
           "category": "urgent"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:urgent"
       ]
     },
     {
@@ -188,6 +232,11 @@
           "score": 5,
           "category": "emergency"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:emergency"
       ]
     },
     {
@@ -204,6 +253,11 @@
           "score": 6,
           "category": "emergency"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:emergency"
       ]
     },
     {
@@ -220,6 +274,11 @@
           "score": 3,
           "category": "emergency"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:emergency"
       ]
     },
     {
@@ -236,6 +295,11 @@
           "score": 3,
           "category": "urgent"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:urgent"
       ]
     },
     {
@@ -252,6 +316,11 @@
           "score": 0,
           "category": "standard"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:standard"
       ]
     },
     {
@@ -268,6 +337,11 @@
           "score": 0,
           "category": "standard"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:standard"
       ]
     },
     {
@@ -284,6 +358,11 @@
           "score": 2,
           "category": "standard"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:standard"
       ]
     },
     {
@@ -300,6 +379,11 @@
           "score": 2,
           "category": "standard"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "scored",
+        "category:standard"
       ]
     },
     {
@@ -317,6 +401,10 @@
             "resp_rate_per_min"
           ]
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "incomplete"
       ]
     },
     {
@@ -334,6 +422,10 @@
             "avpu"
           ]
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "incomplete"
       ]
     },
     {
@@ -350,6 +442,10 @@
           "input": "avpu",
           "value": "unknown"
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "invalid"
       ]
     },
     {
@@ -366,6 +462,10 @@
           "input": "resp_rate_per_min",
           "value": 100
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "invalid"
       ]
     },
     {
@@ -382,6 +482,10 @@
           "input": "resp_rate_per_min",
           "value": -0.01
         }
+      ],
+      "scope": "encounter",
+      "kinds": [
+        "invalid"
       ]
     }
   ]

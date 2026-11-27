@@ -12,6 +12,10 @@
     },
     "expect": [
       "drugx-pregnancy"
+    ],
+    "scope": "patient",
+    "kinds": [
+      "positive"
     ]
   },
   {
@@ -25,6 +29,10 @@
       "sex": "F",
       "age_years": 30
     },
-    "expect": []
+    "expect": [],
+    "scope": "patient",
+    "kinds": [
+      "negative"
+    ]
   }
 ]

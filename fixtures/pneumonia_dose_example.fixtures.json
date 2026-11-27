@@ -15,7 +15,11 @@
         }
       ]
     },
-    "expect": []
+    "expect": [],
+    "scope": "patient",
+    "kinds": [
+      "negative"
+    ]
   },
   {
     "name": "pneumonia wrong",
@@ -35,6 +39,10 @@
     },
     "expect": [
       "pneumonia-dose-weight-band"
+    ],
+    "scope": "patient",
+    "kinds": [
+      "positive"
     ]
   }
 ]

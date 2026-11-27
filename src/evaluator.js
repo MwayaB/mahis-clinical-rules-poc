@@ -1,74 +1,47 @@
 import { inputsHash } from './canonical.js';
-export function evaluate(loadedPackage, ctx) {
- const advice=[];
- const add=(n,severity,message)=>advice.push({rule_id:n.id,severity,message,source_ref:n.source_ref});
- const missing=(n,field,severity='warn')=>add(n,severity,`${field} not recorded; cannot check ${n.id}`);
- if(ctx.proposed_atc==null||ctx.proposed_atc==='') {
-  advice.push({rule_id:'input-proposed_atc',severity:'warn',message:'proposed_atc not recorded; cannot select rules',source_ref:'context:proposed_atc'});
- } else for(const n of loadedPackage.rules) {
-  if(n.type==='scored_triage') continue;
-  if(n.applies_to.atc!==ctx.proposed_atc) continue;
-  const a=n.applies_to;
-  // Known exclusions take priority over missing applicability or clinical inputs.
-  if(a.sex!==undefined&&ctx.sex!=null&&a.sex!==ctx.sex) continue;
-  if(a.age_years&&ctx.age_years!=null&&(ctx.age_years<a.age_years.min||ctx.age_years>a.age_years.max)) continue;
-  if(a.icd10!==undefined) {
-   const diagnoses=(ctx.active_diagnoses??[]).filter(d=>['confirmed','presumptive'].includes(d.certainty));
-   if(ctx.terminology_changed||diagnoses.some(d=>d.terminology_version!==loadedPackage.manifest.terminology_version)) {add(n,'warn',`terminology changed; cannot check ${n.id}`);continue;}
-   if(!diagnoses.length) {add(n,'warn',`no indication recorded; cannot check ${n.id}`);continue;}
-   if(!diagnoses.some(d=>d.icd10.startsWith(a.icd10))) continue;
-  }
-  const absentApplicability=[];
-  if(a.sex!==undefined&&ctx.sex==null) absentApplicability.push('sex');
-  if(a.age_years&&ctx.age_years==null) absentApplicability.push('age_years');
-  if(absentApplicability.length) {for(const field of absentApplicability) missing(n,field);continue;}
-  if(n.type==='table') {
-   const x=ctx[n.input];
-   if(x==null) {missing(n,n.input,n.on_missing_input);if(ctx.proposed_tablets==null) missing(n,'proposed_tablets');continue;}
-   if(typeof x!=='number'||!Number.isFinite(x)) throw new TypeError('Invalid table input');
-   if(ctx.proposed_tablets==null) {missing(n,'proposed_tablets');continue;}
-   if(!Number.isInteger(ctx.proposed_tablets)||ctx.proposed_tablets<0) throw new TypeError('Invalid proposed_tablets');
-   const b=x>=n.coverage.min&&x<n.coverage.max?n.bands.find(b=>(x>b.min||b.min_inclusive&&x===b.min)&&(x<b.max||b.max_inclusive&&x===b.max)):undefined;
-   if(!b) {add(n,n.on_no_band,`${n.input} outside supported bands; cannot check ${n.id}`);continue;}
-   if(ctx.proposed_tablets!==b.value) {
-    const tokens={input_value:x,value:b.value,unit:b.unit,observed:ctx.proposed_tablets};
-    add(n,'warn',n.message_template.replace(/\{(input_value|value|unit|observed)\}/g,(_,k)=>String(tokens[k])));
-   }
-  } else if(n.type==='predicate') {
-   const absent=Object.keys(n.when).filter(k=>ctx[k]==null).sort();
-   if(absent.length) {for(const field of absent) missing(n,field);continue;}
-   if(Object.entries(n.when).every(([k,v])=>ctx[k]===v)) add(n,n.severity,n.message);
-  } else throw new Error('Unknown node type');
+import { getType } from './types/registry.js';
+import { invalidInput } from './domains.js';
+function applicability(node,ctx) {
+ const a=node.applies_to??{},missing=[];
+ if(node.scope?.population!==undefined&&node.scope.population!==ctx.population) return {skip:true};
+ if(a.atc&&ctx.proposed_atc!=null&&a.atc!==ctx.proposed_atc||a.sex&&ctx.sex!=null&&a.sex!==ctx.sex||a.age_years&&ctx.age_years!=null&&(ctx.age_years<a.age_years.min||ctx.age_years>a.age_years.max)) return {skip:true};
+ if(a.atc&&ctx.proposed_atc==null) missing.push('proposed_atc');if(a.sex&&ctx.sex==null) missing.push('sex');if(a.age_years&&ctx.age_years==null) missing.push('age_years');
+ if(a.icd10) {const active=(ctx.active_diagnoses??[]).filter(d=>['confirmed','presumptive'].includes(d.certainty));if(active.length&&!active.some(d=>d.icd10.startsWith(a.icd10))) return {skip:true};if(!active.length) missing.push('active_diagnoses');if(active.length&&(ctx.terminology_changed||active.some(d=>d.terminology_version!==ctx.terminology_version))) return {invalid:[{input:'terminology_version',value:ctx.terminology_version??null,reason:'terminology changed'}]};}
+ return {missing};
+}
+export function assess(loadedPackage,inputs,{scope='all',nodeIds}={}) {
+ const ctx={...inputs,terminology_version:inputs.terminology_version??loadedPackage.manifest.terminology_version};
+ const hash='sha256:'+inputsHash(inputs),results=[];
+ for(const node of [...loadedPackage.rules].sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)) {
+  const type=getType(node.type);if(scope!=='all'&&type.scope!==scope||nodeIds&&!nodeIds.includes(node.id)) continue;
+  const applicable=applicability(node,ctx);if(applicable.skip) continue;
+  const required=type.requiredInputs(node),missing=[...new Set([...(applicable.missing??[]),...required.filter(d=>ctx[d.name]==null).map(d=>d.name)])].sort();
+  const base={node_id:node.id,node_type:node.type,missing:[],invalid:[],payload:{renderer:type.renderer},package_version:loadedPackage.manifest.package_version,engine_version:loadedPackage.engine_version,inputs_hash:hash};
+  if(missing.length) {results.push({...base,status:'incomplete',missing});continue;}
+  const invalid=applicable.invalid??required.flatMap(d=>{const reason=invalidInput(d,ctx[d.name]);return reason?[{input:d.name,value:ctx[d.name],reason}]:[];});
+  if(invalid.length) {results.push({...base,status:'invalid',invalid});continue;}
+  const result=type.evaluate(node,ctx,{package:loadedPackage});
+  if(!['ok','advice'].includes(result.status)||!result.outcome||typeof result.outcome!=='object') throw new Error('Type violated complete-input result contract: '+type.name);
+  results.push({...base,status:result.status,outcome:result.outcome,payload:{...result.payload,renderer:type.renderer,actions:type.allowedActions?.(node,result)??[]}});
  }
- const rank={block:0,warn:1,info:2};
- const cmp=(a,b)=>a<b?-1:a>b?1:0;
- advice.sort((a,b)=>rank[a.severity]-rank[b.severity]||cmp(a.rule_id,b.rule_id)||cmp(a.message,b.message));
- return {advice,package_version:loadedPackage.manifest.package_version,engine_version:loadedPackage.engine_version,contains_placeholders:loadedPackage.manifest.contains_placeholders,inputs_hash:inputsHash(ctx)};
+ return results;
 }
-
-export function triage(loadedPackage, encounterCtx) {
- const metadata={package_version:loadedPackage.manifest.package_version,engine_version:loadedPackage.engine_version,contains_placeholders:loadedPackage.manifest.contains_placeholders,inputs_hash:inputsHash(encounterCtx)};
- const includes=(b,value)=>(value>b.min||b.min_inclusive&&value===b.min)&&(value<b.max||b.max_inclusive&&value===b.max);
- const nodes=loadedPackage.rules.filter(n=>n.type==='scored_triage'&&n.scope.population===encounterCtx.population).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
- return nodes.map(n=>{
-  const base={node_id:n.id,...metadata};
-  const missing=n.parameters.map(p=>p.input).filter(input=>encounterCtx[input]==null).sort();
-  if(missing.length) return {...base,status:'incomplete',missing};
-  const components=[];
-  for(const p of n.parameters) {
-   const value=encounterCtx[p.input];let index,match;
-   if(p.kind==='numeric') {
-    index=typeof value==='number'&&Number.isFinite(value)&&value>=p.coverage.min&&value<p.coverage.max?p.bands.findIndex(b=>includes(b,value)):-1;
-    match=p.bands[index];
-   } else {index=p.levels.findIndex(l=>l.value===value);match=p.levels[index];}
-   if(!match) return {...base,status:'invalid',input:p.input,value};
-   components.push({name:p.name,value,points:match.points,band_id:`${p.name}:${p.kind}:${index}`});
-  }
-  const score=components.reduce((sum,c)=>sum+c.points,0),scoreBand=n.score_bands.find(b=>includes(b,score));
-  if(!scoreBand) throw new Error('Validated triage score is not covered');
-  const overrides=n.overrides.filter(o=>Object.entries(o.when).every(([k,v])=>encounterCtx[k]===v));
-  const candidates=[scoreBand.category,...overrides.map(o=>o.category)];
-  const category=candidates.reduce((highest,candidate)=>n.categories_order.indexOf(candidate)>n.categories_order.indexOf(highest)?candidate:highest);
-  return {...base,status:'scored',score,category,components,overrides_fired:overrides.map(o=>o.id)};
- });
+export function adviceFromAssessments(pkg,ctx,results) {
+ if(ctx.proposed_atc==null||ctx.proposed_atc==='') return [{rule_id:'input-proposed_atc',severity:'warn',message:'proposed_atc not recorded; cannot select rules',source_ref:'context:proposed_atc'}];
+ const advice=[];
+ for(const result of results) {
+  const node=pkg.rules.find(n=>n.id===result.node_id);if(getType(node.type).renderer!=='advice') continue;
+  const add=(severity,message)=>advice.push({rule_id:node.id,severity,message,source_ref:node.source_ref});
+  if(result.outcome) advice.push(...result.outcome.items);
+  else if(result.status==='incomplete') {
+   const applicability=result.missing.filter(k=>['sex','age_years'].includes(k));
+   if(result.missing.includes('active_diagnoses')) add('warn',`no indication recorded; cannot check ${node.id}`);
+   else for(const input of applicability.length?applicability:result.missing) add(input===node.input?node.on_missing_input??'warn':'warn',`${input} not recorded; cannot check ${node.id}`);
+  } else if(result.invalid.some(v=>v.input==='terminology_version')) add('warn',`terminology changed; cannot check ${node.id}`);
+  else if(node.input&&result.invalid.some(v=>v.input===node.input&&v.reason==='outside declared domain')) add(node.on_no_band,`${node.input} outside supported bands; cannot check ${node.id}`);
+  else throw new TypeError('Invalid '+(node.input?'table':'predicate')+' input');
+ }
+ const rank={block:0,warn:1,info:2};return advice.sort((a,b)=>rank[a.severity]-rank[b.severity]||(a.rule_id<b.rule_id?-1:a.rule_id>b.rule_id?1:0)||(a.message<b.message?-1:a.message>b.message?1:0));
 }
+export function evaluate(pkg,ctx) {return {advice:adviceFromAssessments(pkg,ctx,assess(pkg,ctx,{scope:'patient'})),package_version:pkg.manifest.package_version,engine_version:pkg.engine_version,contains_placeholders:pkg.manifest.contains_placeholders,inputs_hash:inputsHash(ctx)};}
+export function triage(pkg,ctx) {return assess(pkg,ctx,{scope:'encounter'}).map(r=>getType(r.node_type).legacyResult?.(r,pkg)??r);}

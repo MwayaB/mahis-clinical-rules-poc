@@ -15,7 +15,11 @@
         }
       ]
     },
-    "expect": []
+    "expect": [],
+    "scope": "patient",
+    "kinds": [
+      "negative"
+    ]
   },
   {
     "name": "malaria wrong",
@@ -35,6 +39,10 @@
     },
     "expect": [
       "al-dose-weight-band"
+    ],
+    "scope": "patient",
+    "kinds": [
+      "positive"
     ]
   },
   {
@@ -53,7 +61,11 @@
         }
       ]
     },
-    "expect": []
+    "expect": [],
+    "scope": "patient",
+    "kinds": [
+      "negative"
+    ]
   },
   {
     "name": "ruled-out malaria warns no indication",
@@ -73,6 +85,10 @@
     },
     "expect": [
       "al-dose-weight-band"
+    ],
+    "scope": "patient",
+    "kinds": [
+      "incomplete"
     ]
   },
   {
@@ -87,6 +103,10 @@
     },
     "expect": [
       "al-dose-weight-band"
+    ],
+    "scope": "patient",
+    "kinds": [
+      "incomplete"
     ]
   }
 ]

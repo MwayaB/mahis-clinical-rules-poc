@@ -9,7 +9,7 @@ import { mkdtempSync,writeFileSync,rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
-import { compile } from '../src/compiler.js';
+import { compile } from './compile-approved.js';
 import { openEventLog } from '../src/events.js';
 import { register,observe,prescribe,diagnose } from '../src/workflow.js';
 export function environment(t) {

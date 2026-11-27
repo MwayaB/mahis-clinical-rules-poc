@@ -4,7 +4,7 @@ import { mkdtempSync,readFileSync,rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
-import { compile } from '../src/compiler.js';
+import { compile } from './compile-approved.js';
 import { ir,clone } from './helpers.js';
 export const fixtures=['dose_band_example','contraindication_example'].flatMap(n=>JSON.parse(readFileSync(new URL('../fixtures/'+n+'.fixtures.json',import.meta.url))));
 test('deterministic signed package and placeholder manifest',()=>{

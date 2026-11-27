@@ -13,6 +13,11 @@
         "score": 0,
         "category": "standard"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:standard"
     ]
   },
   {
@@ -29,6 +34,11 @@
         "score": 2,
         "category": "standard"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:standard"
     ]
   },
   {
@@ -45,6 +55,11 @@
         "score": 3,
         "category": "urgent"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:urgent"
     ]
   },
   {
@@ -61,6 +76,11 @@
         "score": 4,
         "category": "urgent"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:urgent"
     ]
   },
   {
@@ -77,6 +97,11 @@
         "score": 5,
         "category": "emergency"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:emergency"
     ]
   },
   {
@@ -93,6 +118,11 @@
         "score": 6,
         "category": "emergency"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:emergency"
     ]
   },
   {
@@ -109,6 +139,11 @@
         "score": 3,
         "category": "emergency"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:emergency"
     ]
   },
   {
@@ -125,6 +160,11 @@
         "score": 3,
         "category": "urgent"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:urgent"
     ]
   },
   {
@@ -141,6 +181,11 @@
         "score": 0,
         "category": "standard"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:standard"
     ]
   },
   {
@@ -157,6 +202,11 @@
         "score": 0,
         "category": "standard"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:standard"
     ]
   },
   {
@@ -173,6 +223,11 @@
         "score": 2,
         "category": "standard"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:standard"
     ]
   },
   {
@@ -189,6 +244,11 @@
         "score": 2,
         "category": "standard"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "scored",
+      "category:standard"
     ]
   },
   {
@@ -206,6 +266,10 @@
           "resp_rate_per_min"
         ]
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "incomplete"
     ]
   },
   {
@@ -223,6 +287,10 @@
           "avpu"
         ]
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "incomplete"
     ]
   },
   {
@@ -239,6 +307,10 @@
         "input": "avpu",
         "value": "unknown"
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "invalid"
     ]
   },
   {
@@ -255,6 +327,10 @@
         "input": "resp_rate_per_min",
         "value": 100
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "invalid"
     ]
   },
   {
@@ -271,6 +347,10 @@
         "input": "resp_rate_per_min",
         "value": -0.01
       }
+    ],
+    "scope": "encounter",
+    "kinds": [
+      "invalid"
     ]
   }
 ]

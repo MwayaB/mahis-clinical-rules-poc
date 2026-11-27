@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { compile,fixtureGate,projectRules } from '../src/compiler.js';
+import { compile } from './compile-approved.js';
+import { fixtureGate,projectRules } from '../src/compiler.js';
 import { ir } from './helpers.js';
 const fixtures=['dose_band_example','contraindication_example'].flatMap(n=>JSON.parse(readFileSync(new URL('../fixtures/'+n+'.fixtures.json',import.meta.url))));
 for(const n of ir.nodes) for(const positive of [true,false]) test(`gate refuses ${n.id} without ${positive?'positive':'negative'}`,()=>{

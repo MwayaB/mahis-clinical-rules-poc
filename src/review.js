@@ -1,13 +1,15 @@
+import { getType } from './types/registry.js';
+import { approvalEvidence,readReviewEvents } from './approval.js';
 import { requireMetadata } from './registry.js';
 import { manualBlock,listBlocks } from './digitiser.js';
 import { triageFields } from './ir.js';
 import { exact,text,timestamp,ApiError } from './prototype/store.js';
 import { contentHash } from './draft.js';
 import { validateNodes } from './ir.js';
-export function getNode(store,id) {const r=store.db.prepare('SELECT * FROM nodes WHERE node_id=?').get(text(id,'node_id'));if(!r) throw new ApiError('Node not found',404);return {node:JSON.parse(r.node),content_hash:r.content_hash,approvals:JSON.parse(r.approvals),document_sha256:r.document_sha256,block_id:r.block_id};}
+export function getNode(store,id) {const r=store.db.prepare('SELECT * FROM nodes WHERE node_id=?').get(text(id,'node_id'));if(!r) throw new ApiError('Node not found',404);return {node:JSON.parse(r.node),content_hash:r.content_hash,approvals:approvalEvidence(JSON.parse(r.node),readReviewEvents(store,id)),document_sha256:r.document_sha256,block_id:r.block_id};}
 export function nodeErrors(node) {
  const {parse_errors,...clean}=node;
- return [...(parse_errors??[]),...validateNodes([{...clean,status:'approved',reviewers:['validation-reviewer-a','validation-reviewer-b']}])];
+ return [...(parse_errors??[]),...validateNodes([clean])];
 }
 function save(store,current,node,approvals,kind,actor,now) {
  text(actor,'reviewer/editor');timestamp(now);const hash=contentHash(node);
@@ -40,16 +42,17 @@ export function rejectNode(store,id,body,{now}) {
 }
 export function reviewHistory(store,id) {getNode(store,id);return store.db.prepare('SELECT * FROM review_events WHERE node_id=? ORDER BY seq').all(id).map(r=>({...r,snapshot:JSON.parse(r.snapshot)}));}
 
-export function importTriageDraft(store,body,{actor,now}) {
+export function importRuleDraft(store,body,{actor,now}) {
  exact(body,['document_sha256','node','block_id'],['document_sha256','node']);requireMetadata(store,body.document_sha256);
  const node=structuredClone(body.node);
- if(node?.type!=='scored_triage') throw new ApiError('Only authored scored_triage nodes are accepted here',422);
+ try{getType(node?.type);}catch(e){throw new ApiError(e.message,422);}
  node.status='draft';node.reviewers=[];
  const errors=nodeErrors(node);if(errors.length) throw new ApiError(errors.join('; '),422);
  const blocks=listBlocks(store,body.document_sha256);
  const matches=blocks.filter(b=>b.page===node.source.page&&b.text===node.source.text&&JSON.stringify(b.bbox)===JSON.stringify(node.source.bbox));
- if(body.block_id===undefined&&matches.length>1) throw new ApiError('Multiple matching source blocks; provide block_id',422);
- const sourceBlock=body.block_id!==undefined?blocks.find(b=>b.id===body.block_id):matches[0];
+ const autoMatches=matches.filter(b=>b.digitiser!=='manual');
+ if(body.block_id===undefined&&autoMatches.length>1) throw new ApiError('Multiple matching source blocks; provide block_id',422);
+ const sourceBlock=body.block_id!==undefined?blocks.find(b=>b.id===body.block_id):autoMatches[0];
  if(body.block_id!==undefined&&!sourceBlock) throw new ApiError('Source block not found',422);
  if(sourceBlock&&!matches.includes(sourceBlock)) throw new ApiError('Authored triage provenance must match the selected source block',422);
  const block_id=sourceBlock?.id??node.id;
@@ -64,3 +67,5 @@ export function importTriageDraft(store,body,{actor,now}) {
   return getNode(store,node.id);
  });
 }
+
+export const importTriageDraft=importRuleDraft;

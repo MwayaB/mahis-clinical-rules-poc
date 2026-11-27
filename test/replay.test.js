@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { ir,clone,ctx,environment } from './helpers.js';
-import { compile } from '../src/compiler.js';
+import { compile } from './compile-approved.js';
 import { applyPackage } from '../src/package.js';
 import { evaluate } from '../src/evaluator.js';
 import { observe,replay } from '../src/workflow.js';

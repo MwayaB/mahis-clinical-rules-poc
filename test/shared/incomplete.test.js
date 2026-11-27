@@ -1,0 +1,2 @@
+import { test } from 'node:test';import assert from 'node:assert/strict';import { assess } from '../../src/evaluator.js';import { cases,context,packageFor } from './support.js';
+for(const c of cases()) for(const input of c.type.requiredInputs(c.node)) test('shared missing '+c.type.name+' '+input.name,()=>{const r=assess(packageFor(c),{...context(c.node),[input.name]:null})[0];assert.equal(r.status,'incomplete');assert.ok(r.missing.includes(input.name));assert.equal(Object.hasOwn(r,'outcome'),false);assert.equal(Object.hasOwn(r.payload,'score'),false);});

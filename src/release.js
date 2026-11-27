@@ -1,3 +1,4 @@
+import { requireApprovals,readReviewEvents,approvalEvidence } from './approval.js';
 import { mkdirSync,writeFileSync,readFileSync,existsSync,rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateKeyPairSync,createPrivateKey,createPublicKey } from 'node:crypto';
@@ -26,8 +27,9 @@ export function createRelease(store,body,{keyDir,actor,now}) {
  if(store.db.prepare('SELECT 1 FROM releases WHERE version=?').get(body.version)) throw new ApiError('Release version already exists; releases are append-only',409);
  const drafts=listDrafts(store,source.sha256),errors=[];
  if(!drafts.nodes.length) errors.push('No nodes drafted');
- for(const {node,approvals,content_hash} of drafts.nodes) {
-  if(node.status!=='approved'||new Set(approvals.filter(a=>a.content_hash===content_hash).map(a=>a.reviewer)).size<2) errors.push(`${node.id}: not approved by two distinct reviewers for current content`);
+ const reviewEvents=readReviewEvents(store);
+ try{requireApprovals(drafts.nodes.map(r=>r.node),reviewEvents);}catch(e){errors.push(e.message);}
+ for(const {node} of drafts.nodes) {
   if(node.parse_errors?.length) errors.push(`${node.id}: parse errors: ${node.parse_errors.join('; ')}`);
  }
  if(drafts.unconverted.length) errors.push('Unconverted source blocks require manual review: '+drafts.unconverted.map(b=>b.block_id).join(', '));
@@ -39,7 +41,7 @@ export function createRelease(store,body,{keyDir,actor,now}) {
  if(existsSync(dir)) throw new ApiError('Release directory already exists; refusing overwrite',409);
  let created=false;
  try {
-  compile(ir,{dir,privateKey:readFileSync(keys.privatePath),fixtures,packageVersion:body.version});created=true;
+  compile(ir,{dir,privateKey:readFileSync(keys.privatePath),fixtures,packageVersion:body.version,reviewEvents});created=true;
   const {manifest}=verifyPackage(dir,[keys.publicPath]);applyPackage(dir,{trustedPublicKeys:[keys.publicPath],engineVersion:'0.1.0'});
   const record={kind:'release-created',version:body.version,document_sha256:source.sha256,rules_sha256:manifest.rules_sha256,manifest_sha256:inputsHash(manifest),created_at:now,created_by:actor,contains_placeholders:manifest.contains_placeholders,reviewers:Object.fromEntries(drafts.nodes.map(r=>[r.node.id,r.approvals.map(a=>a.reviewer)])),fixture_count:fixtures.length};
   store.db.prepare('INSERT INTO releases VALUES(?,?)').run(body.version,store.encode(record));return record;

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { compile } from '../src/compiler.js';
+import { compile } from './compile-approved.js';
 import { openEventLog } from '../src/events.js';
 import { register,observe,prescribe } from '../src/workflow.js';
 import { environment } from './helpers.js';

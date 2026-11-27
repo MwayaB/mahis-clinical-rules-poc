@@ -44,7 +44,7 @@ export async function releasedHTTP(s) {
   const scoped=entry.node,term=(await import('../../src/terminology.js')).defaultTerminology,code=term.codes.find(c=>c.code.startsWith(scoped.applies_to.icd10??''))?.code;
   const correct=n.type==='table'?n.bands.find(b=>b.min<=12&&b.max>12).value:1;
   const ctx={active_diagnoses:[{icd10:code,certainty:'confirmed',terminology_version:term.terminology_version}],sex:'F',age_years:30,today:'2026-01-01',weight_kg:12,pregnant:n.type==='predicate',proposed_atc:n.applies_to.atc,proposed_tablets:n.type==='table'?correct+1:2};
-  await s.ok('/api/fixtures',{node_id:n.id,entries:[{name:'PLACEHOLDER positive',ctx,expect:[n.id]},{name:'PLACEHOLDER negative',ctx:{...ctx,...(n.type==='table'?{proposed_tablets:correct}:{pregnant:false})},expect:[]}]});
+  await s.ok('/api/fixtures',{node_id:n.id,entries:[{name:'PLACEHOLDER positive',kinds:['positive'],ctx,expect:[n.id]},{name:'PLACEHOLDER negative',kinds:['negative'],ctx:{...ctx,...(n.type==='table'?{proposed_tablets:correct}:{pregnant:false})},expect:[]}]});
  }
  const release=await s.ok('/api/releases',{document_sha256:upload.sha256,version:'poc-demo-0.1.0'});return {upload,digitisation,drafts,release};
 }

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
 import { httpEnvironment,releasedHTTP } from './support.js';
-import { compile } from '../../src/compiler.js';
+import { compile } from '../compile-approved.js';
 import { loadRelease } from '../../src/release.js';
 import { ir } from '../helpers.js';
 test('an unrelated historical release signed by another key cannot block pregnancy status',async t=>{

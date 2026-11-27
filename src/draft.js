@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { listBlocks } from './digitiser.js';
 import { requireMetadata } from './registry.js';
 import { exact,text,ApiError,timestamp } from './prototype/store.js';
-import { inputsHash } from './canonical.js';
+import { contentHash,approvalEvidence,readReviewEvents } from './approval.js';
+export { contentHash } from './approval.js';
 const tableTemplate=JSON.parse(readFileSync(new URL('../ir/dose_band_example.ir.json',import.meta.url))).nodes[0];
 const predicateTemplate=JSON.parse(readFileSync(new URL('../ir/contraindication_example.ir.json',import.meta.url))).nodes[0];
 export function draftBlocks(blocks,{documentSha,atcByBlock}) {
@@ -43,7 +44,6 @@ export function draftBlocks(blocks,{documentSha,atcByBlock}) {
  }
  return {nodes,unconverted};
 }
-export function contentHash(node) {const {status,reviewers,...content}=node;return inputsHash(content);}
 export function generateDrafts(store,sha,body,{actor,now}) {
  requireMetadata(store,sha);exact(body,['atc_by_block']);exact(body.atc_by_block,Object.keys(body.atc_by_block??{}),[]);text(actor,'editor');timestamp(now);
  const blocks=listBlocks(store,sha);
@@ -68,6 +68,6 @@ export function generateDrafts(store,sha,body,{actor,now}) {
 }
 export function listDrafts(store,sha) {
  requireMetadata(store,sha);const blocks=listBlocks(store,sha);
- const nodes=store.db.prepare('SELECT * FROM nodes WHERE document_sha256=? ORDER BY node_id').all(sha).map(r=>({node:JSON.parse(r.node),content_hash:r.content_hash,approvals:JSON.parse(r.approvals),block:blocks.find(b=>b.id===r.block_id)}));
+ const nodes=store.db.prepare('SELECT * FROM nodes WHERE document_sha256=? ORDER BY node_id').all(sha).map(r=>({node:JSON.parse(r.node),content_hash:r.content_hash,approvals:approvalEvidence(JSON.parse(r.node),readReviewEvents(store,r.node_id)),block:blocks.find(b=>b.id===r.block_id)}));
  return {nodes,unconverted:blocks.filter(b=>!nodes.some(n=>n.block.id===b.id)).map(b=>({block_id:b.id,reason:'not converted: review manually',block:b}))};
 }

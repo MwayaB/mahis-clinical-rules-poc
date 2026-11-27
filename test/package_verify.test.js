@@ -4,7 +4,7 @@ import { mkdtempSync,readFileSync,writeFileSync,rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateKeyPairSync,sign,createHash } from 'node:crypto';
-import { compile } from '../src/compiler.js';
+import { compile } from './compile-approved.js';
 import { applyPackage,compareVersions } from '../src/package.js';
 import { canonicalStringify } from '../src/canonical.js';
 import { ir } from './helpers.js';

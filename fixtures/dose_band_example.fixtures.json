@@ -17,6 +17,10 @@
     },
     "expect": [
       "al-dose-weight-band"
+    ],
+    "scope": "patient",
+    "kinds": [
+      "positive"
     ]
   },
   {
@@ -35,6 +39,10 @@
         }
       ]
     },
-    "expect": []
+    "expect": [],
+    "scope": "patient",
+    "kinds": [
+      "negative"
+    ]
   }
 ]

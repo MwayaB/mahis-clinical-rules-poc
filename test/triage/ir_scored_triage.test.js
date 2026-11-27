@@ -11,7 +11,7 @@ for(const [name,mutate,match] of [
  ['incomplete score range',n=>n.score_bands[2].max=5,/coverage/],['score overlap',n=>n.score_bands[1].min=2,/overlap/],['score gap',n=>n.score_bands[1].min=4,/gap/],
  ['unknown score category',n=>n.score_bands[0].category='other',/category/],['unknown override category',n=>n.overrides[0].category='other',/category/],
  ['duplicate category order',n=>n.categories_order.push(n.categories_order[0]),/duplicate categories/],['unknown override field',n=>n.overrides[0].when={unlisted:true},/override input/],
- ['override expression',n=>n.overrides[0].when={avpu:{gt:2}},/equality/],['high risk requires two reviewers',n=>n.reviewers=['one'],/reviewers/],
+ ['override expression',n=>n.overrides[0].when={avpu:{gt:2}},/equality/],['invalid reviewer metadata',n=>n.reviewers=[false],/reviewers/],
  ['duplicate parameter',n=>n.parameters.push(copy(n.parameters[0])),/duplicate parameter/],['unknown node field',n=>n.extra=true,/unknown field/],
  ['unknown scope field',n=>n.scope.extra=true,/unknown field/],['unknown parameter field',n=>n.parameters[0].extra=true,/unknown field/],
  ['unknown band field',n=>n.parameters[0].bands[0].extra=true,/unknown field/],['unknown level field',n=>n.parameters[1].levels[0].extra=true,/unknown field/],

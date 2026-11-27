@@ -1,0 +1,2 @@
+import { test } from 'node:test';import assert from 'node:assert/strict';import { assess } from '../../src/evaluator.js';import { cases,context,packageFor } from './support.js';
+for(const c of cases()) test('shared applicability skip '+c.type.name,()=>{const inputs={...context(c.node),...(c.node.scope?{population:'unmatched-population'}:{proposed_atc:'UNRELATED'})};for(const d of c.type.requiredInputs(c.node)) inputs[d.name]=null;assert.deepEqual(assess(packageFor(c),inputs),[]);});

@@ -4,7 +4,7 @@ import { mkdtempSync,rmSync,readFileSync,existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
-import { compile } from '../../src/compiler.js';
+import { compile } from '../compile-approved.js';
 import { defaultTerminology as seed } from '../../src/terminology.js';
 import { dose,clone } from '../helpers.js';
 test('release records validation terminology and refuses unresolved prefixes',t=>{const root=mkdtempSync(join(tmpdir(),'term-release-'));t.after(()=>rmSync(root,{recursive:true,force:true}));const privateKey=generateKeyPairSync('ed25519').privateKey,fixtures=JSON.parse(readFileSync(new URL('../../fixtures/dose_band_example.fixtures.json',import.meta.url)));const manifest=compile(dose,{dir:join(root,'good'),privateKey,fixtures,terminology:seed});assert.equal(manifest.terminology_version,seed.terminology_version);const ir=clone(dose);ir.nodes[0].applies_to.icd10='Z99';assert.throws(()=>compile(ir,{dir:join(root,'bad'),privateKey,fixtures,terminology:seed}),/al-dose-weight-band: unknown ICD-10 prefix "Z99"/);assert.equal(existsSync(join(root,'bad')),false);const empty={...seed,codes:seed.codes.filter(c=>!c.code.startsWith('B50'))};assert.throws(()=>compile(dose,{dir:join(root,'empty'),privateKey,fixtures,terminology:empty}),/unknown ICD-10 prefix/);});
