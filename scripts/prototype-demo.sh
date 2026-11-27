@@ -21,6 +21,7 @@ for attempt in {1..60}; do
  sleep 0.1
 done
 if [[ "$ready" != true ]]; then echo 'Server did not become ready.' >&2; kill "$server_pid"; exit 1; fi
+echo 'Running dose checks and adult triage: incomplete, scored, overridden and replayed.'
 node scripts/prototype-flow.js
 trap - ERR
 echo "Server remains running on 127.0.0.1:8080 (PID $server_pid)."
