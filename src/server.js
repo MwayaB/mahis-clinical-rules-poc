@@ -12,7 +12,7 @@ import * as review from './review.js';
 import * as fixtures from './fixtures.js';
 import * as releases from './release.js';
 import * as emr from './emr.js';
-const staticFiles={'/':'guidelines.html','/guidelines.html':'guidelines.html','/digitise.html':'digitise.html','/review.html':'review.html','/emr.html':'emr.html','/style.css':'style.css','/common.js':'common.js','/guidelines.js':'guidelines.js','/digitise.js':'digitise.js','/review.js':'review.js','/emr.js':'emr.js','/samples/dose-guide/placeholder.pdf':'../samples/dose-guide/placeholder.pdf'};
+const staticFiles={'/':'guidelines.html','/guidelines.html':'guidelines.html','/digitise.html':'digitise.html','/review.html':'review.html','/emr.html':'emr.html','/style.css':'style.css','/common.js':'common.js','/guidelines.js':'guidelines.js','/digitise.js':'digitise.js','/review.js':'review.js','/emr.js':'emr.js','/triage.js':'triage.js','/samples/dose-guide/placeholder.pdf':'../samples/dose-guide/placeholder.pdf','/samples/triage/placeholder.pdf':'../samples/triage/placeholder.pdf'};
 function readBody(req,max) {
  return new Promise((done,fail)=>{
   let size=0,chunks=[],failed=false;
@@ -73,6 +73,7 @@ export async function startServer({host='127.0.0.1',port=8080,dataDir=fileURLToP
    if(path==='/api/fixtures'&&method==='POST') return send(200,fixtures.saveFixtures(store,await jsonBody(req)));
    if(path==='/api/releases'&&method==='GET') return send(200,releases.listReleases(store));
    if(path==='/api/releases'&&method==='POST') return send(201,releases.createRelease(store,await jsonBody(req),meta()));
+   if(path==='/api/triage/sample'&&method==='GET') return send(200,{ir:JSON.parse(readFileSync(new URL('../ir/triage_example.ir.json',import.meta.url))),fixtures:JSON.parse(readFileSync(new URL('../fixtures/triage_example.fixtures.json',import.meta.url)))});
    if(path==='/api/triage/config'&&method==='GET') return send(200,encounters.triageConfiguration(store,url.searchParams.get('release_version'),{keyDir}));
    if(path==='/api/encounters'&&method==='POST') return send(201,encounters.startEncounter(store,events,await jsonBody(req),meta()));
    if((match=/^\/api\/encounters\/([^/]+)(?:\/(observations|triage|triage\/override))?$/.exec(path))) {

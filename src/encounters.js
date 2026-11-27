@@ -52,7 +52,8 @@ export function readEncounter(store,db,id,{keyDir}) {
  const current=latest&&!events.some(x=>x.type==='observation-recorded'&&x.seq>latest.seq)?latest:null;
  const override=current?events.filter(x=>x.type==='triage-overridden'&&x.payload.triage_ref===current.event_id).at(-1):null;
  const pkg=current?loadRelease(store,current.payload.package_version,{keyDir}):null;
- return {encounter_id:id,patient_id:e.patient_id,population:e.payload.population,ctx:buildEncounterContext(db.listForPatient(e.patient_id),id,e.payload.population),events,current,display:current?display(current.payload.results,pkg):null,override};
+ const override_categories=current&&current.payload.results.every(r=>r.status==='scored')?pkg.rules.find(n=>n.id===current.payload.results[0].node_id).categories_order.filter(c=>current.payload.results.every(r=>pkg.rules.find(n=>n.id===r.node_id).categories_order.includes(c))):[];
+ return {override_categories,encounter_id:id,patient_id:e.patient_id,population:e.payload.population,ctx:buildEncounterContext(db.listForPatient(e.patient_id),id,e.payload.population),events,current,display:current?display(current.payload.results,pkg):null,override};
 }
 export function replayTriage({db,patientId,adviceEvent:e,loadedPackage:pkg}) {
  const p=e.payload,stored=db.listForPatient(patientId,{upToSeq:e.seq}).find(x=>x.event_id===e.event_id);
