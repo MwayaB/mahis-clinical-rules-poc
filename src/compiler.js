@@ -1,20 +1,24 @@
 import { defaultTerminology } from './terminology.js';
-import { evaluate } from './evaluator.js';
+import { evaluate,triage } from './evaluator.js';
 import { mkdirSync, writeFileSync, renameSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createHash, sign, createPrivateKey } from 'node:crypto';
 import { canonicalStringify } from './canonical.js';
-import { validateIR, tableFields, predicateFields } from './ir.js';
+import { validateIR, tableFields, predicateFields,triageFields } from './ir.js';
 export const ENGINE_VERSION='0.1.0';
 export const sha256 = bytes=>createHash('sha256').update(bytes).digest('hex');
 export function projectRules(ir) {
- return ir.nodes.map(n=>Object.fromEntries(['id','type',...(n.type==='table'?tableFields:predicateFields)].map(k=>[k,n[k]]).concat([['source_ref',`${ir.document.id}:p${n.source.page}:${n.id}`]])));
+ return ir.nodes.map(n=>Object.fromEntries(['id','type',...(n.type==='table'?tableFields:n.type==='scored_triage'?triageFields:predicateFields)].map(k=>[k,n[k]]).concat([['source_ref',`${ir.document.id}:p${n.source.page}:${n.id}`]])));
 }
 function fixtureAdvice(rules,ctx,terminology) {
  return evaluate({rules,manifest:{package_version:'fixture',contains_placeholders:true,terminology_version:terminology.terminology_version},engine_version:ENGINE_VERSION},Object.freeze(ctx)).advice.map(n=>n.rule_id).sort();
 }
 export function fixtureGate(rules,fixtures,terminology=defaultTerminology) {
  if(!Array.isArray(fixtures)) throw new Error('Fixtures must be an array');
+ const scored=rules.filter(n=>n.type==='scored_triage'),ordinary=rules.filter(n=>n.type!=='scored_triage');
+ const triageFixtures=fixtures.filter(f=>f?.ctx?.population!==undefined||f?.expect?.some(e=>typeof e==='object'));
+ if(scored.length) triageFixtureGate(scored,triageFixtures);else if(triageFixtures.length) throw new Error('Triage fixtures without triage rules');
+ rules=ordinary;fixtures=fixtures.filter(f=>!triageFixtures.includes(f));
  const counts=new Map(rules.map(n=>[n.id,{positive:0,negative:0}]));
  for(const f of fixtures) {
   if(!f||Object.keys(f).some(k=>!['name','ctx','expect'].includes(k))||typeof f.name!=='string'||!Array.isArray(f.expect)||new Set(f.expect).size!==f.expect.length||f.expect.some(id=>!counts.has(id))) throw new Error('Invalid fixture '+f?.name);
@@ -38,7 +42,7 @@ export function compile(ir,{dir,privateKey,fixtures,packageVersion='poc-0.1.0',t
  if(!/^poc-(?:demo-)?\d+\.\d+\.\d+$/.test(packageVersion)) throw new Error('Invalid package version');
  const rules=projectRules(ir); fixtureGate(rules,fixtures,terminology);
  const rulesBytes=Buffer.from(canonicalStringify(rules));
- const manifest={package_version:packageVersion,terminology_version:terminology.terminology_version,ir_version:'0.1',engine_min_version:ENGINE_VERSION,contains_placeholders:ir.nodes.some(n=>n.placeholder),source_documents:[ir.document],rules_sha256:sha256(rulesBytes),node_count:rules.length};
+ const manifest={package_version:packageVersion,terminology_version:terminology.terminology_version,ir_version:'0.1',engine_min_version:ENGINE_VERSION,contains_placeholders:ir.nodes.some(n=>n.placeholder),source_documents:[ir.document],rules_sha256:sha256(rulesBytes),node_count:rules.length,triage_nodes:rules.filter(n=>n.type==='scored_triage').length};
  const manifestBytes=Buffer.from(canonicalStringify(manifest));
  const key=privateKey?.type==='private'?privateKey:createPrivateKey(privateKey);
  if(key.asymmetricKeyType!=='ed25519') throw new Error('Ed25519 private key required');
@@ -52,4 +56,17 @@ export function compile(ir,{dir,privateKey,fixtures,packageVersion='poc-0.1.0',t
   renameSync(staging,dir);
  } catch(e) {rmSync(staging,{recursive:true,force:true});throw e;}
  return manifest;
+}
+
+export function triageFixtureGate(rules,fixtures) {
+ const counts=new Map(rules.map(n=>[n.id,new Set()]));
+ const pkg={rules,manifest:{package_version:'fixture',contains_placeholders:true},engine_version:ENGINE_VERSION};
+ const keys=['node_id','status','score','category','missing','input','value','components','overrides_fired'];
+ for(const f of fixtures) {
+  if(!f||typeof f.name!=='string'||!f.ctx||!Array.isArray(f.expect)||Object.keys(f).some(k=>!['name','ctx','expect'].includes(k))||f.expect.some(e=>!e||!counts.has(e.node_id)||Object.keys(e).some(k=>!keys.includes(k)))) throw new Error('Invalid triage fixture '+f?.name);
+  const result=triage(pkg,f.ctx),projected=result.map((r,i)=>Object.fromEntries(Object.keys(f.expect[i]??{}).map(k=>[k,r[k]])));
+  if(result.length!==f.expect.length||canonicalStringify(projected)!==canonicalStringify(f.expect)) throw new Error('Triage fixture mismatch '+f.name);
+  for(const r of result) {counts.get(r.node_id).add(r.status);if(r.status==='scored') counts.get(r.node_id).add('category:'+r.category);}
+ }
+ for(const n of rules) for(const required of ['scored','incomplete','invalid',...n.categories_order.map(c=>'category:'+c)]) if(!counts.get(n.id).has(required)) throw new Error(`${n.id}: triage fixture coverage missing ${required}`);
 }

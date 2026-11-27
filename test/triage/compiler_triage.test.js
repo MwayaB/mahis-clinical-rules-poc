@@ -1,0 +1,10 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync,readFileSync,rmSync,writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { generateKeyPairSync } from 'node:crypto';
+import { compile } from '../../src/compiler.js';
+import { applyPackage } from '../../src/package.js';
+import { ir,fixtures } from './support.js';
+test('compiled triage nodes manifest and signatures are deterministic and verified',t=>{const root=mkdtempSync(join(tmpdir(),'triage-compile-'));t.after(()=>rmSync(root,{recursive:true,force:true}));const keys=generateKeyPairSync('ed25519'),pub=join(root,'pub.pem');writeFileSync(pub,keys.publicKey.export({type:'spki',format:'pem'}));for(const name of ['a','b']) {const manifest=compile(ir,{dir:join(root,name),privateKey:keys.privateKey,fixtures});assert.equal(manifest.triage_nodes,1);assert.equal(manifest.contains_placeholders,true);}for(const f of ['rules.json','manifest.json','manifest.sig']) assert.deepEqual(readFileSync(join(root,'a',f)),readFileSync(join(root,'b',f)));const pkg=applyPackage(join(root,'a'),{trustedPublicKeys:[pub],engineVersion:'0.1.0'});assert.equal(pkg.rules[0].type,'scored_triage');for(const k of ['scope','parameters','score_bands','overrides','categories_order']) assert.deepEqual(pkg.rules[0][k],ir.nodes[0][k]);});

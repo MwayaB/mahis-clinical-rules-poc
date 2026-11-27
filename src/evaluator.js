@@ -6,6 +6,7 @@ export function evaluate(loadedPackage, ctx) {
  if(ctx.proposed_atc==null||ctx.proposed_atc==='') {
   advice.push({rule_id:'input-proposed_atc',severity:'warn',message:'proposed_atc not recorded; cannot select rules',source_ref:'context:proposed_atc'});
  } else for(const n of loadedPackage.rules) {
+  if(n.type==='scored_triage') continue;
   if(n.applies_to.atc!==ctx.proposed_atc) continue;
   const a=n.applies_to;
   // Known exclusions take priority over missing applicability or clinical inputs.
@@ -43,4 +44,31 @@ export function evaluate(loadedPackage, ctx) {
  const cmp=(a,b)=>a<b?-1:a>b?1:0;
  advice.sort((a,b)=>rank[a.severity]-rank[b.severity]||cmp(a.rule_id,b.rule_id)||cmp(a.message,b.message));
  return {advice,package_version:loadedPackage.manifest.package_version,engine_version:loadedPackage.engine_version,contains_placeholders:loadedPackage.manifest.contains_placeholders,inputs_hash:inputsHash(ctx)};
+}
+
+export function triage(loadedPackage, encounterCtx) {
+ const metadata={package_version:loadedPackage.manifest.package_version,engine_version:loadedPackage.engine_version,contains_placeholders:loadedPackage.manifest.contains_placeholders,inputs_hash:inputsHash(encounterCtx)};
+ const includes=(b,value)=>(value>b.min||b.min_inclusive&&value===b.min)&&(value<b.max||b.max_inclusive&&value===b.max);
+ const nodes=loadedPackage.rules.filter(n=>n.type==='scored_triage'&&n.scope.population===encounterCtx.population).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
+ return nodes.map(n=>{
+  const base={node_id:n.id,...metadata};
+  const missing=n.parameters.map(p=>p.input).filter(input=>encounterCtx[input]==null).sort();
+  if(missing.length) return {...base,status:'incomplete',missing};
+  const components=[];
+  for(const p of n.parameters) {
+   const value=encounterCtx[p.input];let index,match;
+   if(p.kind==='numeric') {
+    index=typeof value==='number'&&Number.isFinite(value)&&value>=p.coverage.min&&value<p.coverage.max?p.bands.findIndex(b=>includes(b,value)):-1;
+    match=p.bands[index];
+   } else {index=p.levels.findIndex(l=>l.value===value);match=p.levels[index];}
+   if(!match) return {...base,status:'invalid',input:p.input,value};
+   components.push({name:p.name,value,points:match.points,band_id:`${p.name}:${p.kind}:${index}`});
+  }
+  const score=components.reduce((sum,c)=>sum+c.points,0),scoreBand=n.score_bands.find(b=>includes(b,score));
+  if(!scoreBand) throw new Error('Validated triage score is not covered');
+  const overrides=n.overrides.filter(o=>Object.entries(o.when).every(([k,v])=>encounterCtx[k]===v));
+  const candidates=[scoreBand.category,...overrides.map(o=>o.category)];
+  const category=candidates.reduce((highest,candidate)=>n.categories_order.indexOf(candidate)>n.categories_order.indexOf(highest)?candidate:highest);
+  return {...base,status:'scored',score,category,components,overrides_fired:overrides.map(o=>o.id)};
+ });
 }
