@@ -1,3 +1,4 @@
+import { triageReviewEditor } from './triage-review.js';
 import {$,el,api,form,action,notice,error,sourceSelection,blockCard,input,field} from './common.js';
 let sha=sourceSelection(new URLSearchParams(location.search).get('document'));
 const json=(value)=>JSON.stringify(value,null,2);
@@ -44,8 +45,12 @@ async function triageCard(entry) {
  const n=entry.node,box=el('section',{class:'card'},el('h2',{},'Scored triage · '+n.id),el('p',{},`${n.status} · ${entry.approvals.length} of 2 approvals`),blockCard(entry.block));
  if(n.parse_errors?.length) box.append(el('div',{class:'parse-errors'},n.parse_errors.join('; ')));
  const editable=['scope','parameters','score_bands','overrides','categories_order'],editor=el('textarea',{rows:20,required:true},json(Object.fromEntries(editable.map(k=>[k,n[k]]))));
- const edit=el('form',{method:'post',action:`/api/ir/${n.id}/edit`,'aria-label':'Edit scored triage '+n.id},field(n.id+'-triage-json','Authored triage fields (JSON)',editor),el('button',{type:'submit'},'Save triage revision'));
- form(edit,async()=>{await api(`/api/ir/${n.id}/edit`,JSON.parse(editor.value));notice('Triage revision saved; previous approvals reset.');await refreshNodes();});
+ let structured;try{structured=triageReviewEditor(n);}catch{structured=null;}
+ const edit=el('form',{method:'post',action:`/api/ir/${n.id}/edit`,'aria-label':'Review triage inputs '+n.id},structured?.view??el('p',{},'Correct the rule schema in the advanced editor to restore the structured inputs.'),el('button',{type:'submit',disabled:!structured},'Save triage revision'));
+ form(edit,async()=>{await api(`/api/ir/${n.id}/edit`,structured.value());notice('Triage revision saved; previous approvals reset.');await refreshNodes();});
+ const advancedForm=el('form',{method:'post',action:`/api/ir/${n.id}/edit`,'aria-label':'Advanced triage JSON '+n.id},field(n.id+'-triage-json','Authored triage fields (JSON)',editor),el('button',{type:'submit',class:'secondary'},'Save advanced triage edit'));
+ form(advancedForm,async()=>{await api(`/api/ir/${n.id}/edit`,JSON.parse(editor.value));notice('Triage revision saved; previous approvals reset.');await refreshNodes();});
+ const advanced=el('details',{open:!structured},el('summary',{},'Advanced JSON editor'),advancedForm);
  const approval=el('form',{method:'post',action:`/api/ir/${n.id}/approve`,'aria-label':'Approve triage '+n.id}),reviewer=input(n.id+'-reviewer','Reviewer ID (required)','','text',{required:true});approval.append(reviewer,el('button',{type:'submit'},'Approve current triage revision'));
  form(approval,async()=>{await api(`/api/ir/${n.id}/approve`,{reviewer:reviewer.querySelector('input').value});notice('Approval recorded for triage content.');await refreshNodes();});
  const f=await api('/api/fixtures?node='+encodeURIComponent(n.id)),fixturesText=el('textarea',{rows:14,required:true},json(f.entries));
@@ -53,7 +58,7 @@ async function triageCard(entry) {
  const load=el('button',{type:'button',class:'secondary'},'Load sample triage fixtures');action(load,async()=>{const sample=await api('/api/triage/sample');if(n.id!==sample.ir.nodes[0].id&&sha!==sample.ir.document.checksum.slice('sha256:'.length)) throw Error('Sample fixtures do not match this rule');fixturesText.value=json(sample.fixtures.map(f=>({...f,expect:f.expect.map(e=>({...e,node_id:n.id}))}))); notice('Sample fixtures loaded; inspect and save them for this revision.');});fixtureForm.append(load,el('button',{type:'submit'},'Save triage fixtures'));
  form(fixtureForm,async()=>{await api('/api/fixtures',{node_id:n.id,entries:JSON.parse(fixturesText.value)});notice('Triage fixtures saved for current revision.');await refreshNodes();});
  const history=el('details',{},el('summary',{},'Triage revision and approval history')),historyOut=el('pre'),loadHistory=el('button',{type:'button',class:'secondary'},'Load history');action(loadHistory,async()=>{historyOut.textContent=json(await api(`/api/ir/${n.id}/history`));});history.append(loadHistory,historyOut);
- box.append(edit,approval,el('details',{class:'fixture-editor'},el('summary',{},`Authored triage fixtures · ${f.entries.length}${f.stale?' · STALE':''}`),fixtureForm),el('p',{class:'hash'},entry.content_hash),history);return box;
+ box.append(edit,advanced,approval,el('details',{class:'fixture-editor'},el('summary',{},`Authored triage fixtures · ${f.entries.length}${f.stale?' · STALE':''}`),fixtureForm),el('p',{class:'hash'},entry.content_hash),history);return box;
 }
 
 async function nodeCard(entry) {
@@ -87,7 +92,7 @@ async function nodeCard(entry) {
  const history=el('details',{},el('summary',{},'Revision & approval history'));const load=el('button',{type:'button',class:'secondary'},'Show history'),out=el('pre',{class:'hash'});action(load,async()=>{out.textContent=json(await api(`/api/ir/${n.id}/history`));});history.append(load,out);box.append(history);return box;
 }
 async function refreshNodes() {
- const data=await api('/api/ir?document='+sha);$('nodes').replaceChildren(...await Promise.all(data.nodes.map(nodeCard)));$('unconverted').replaceChildren(...data.unconverted.map(b=>el('div',{class:'parse-errors'},`Block ${b.block_id}: ${b.reason}`)));
+ const data=await api('/api/ir?document='+sha);$('triage-import-panel').hidden=data.nodes.some(entry=>entry.node.type==='scored_triage');$('nodes').replaceChildren(...await Promise.all(data.nodes.map(nodeCard)));$('unconverted').replaceChildren(...data.unconverted.map(b=>el('div',{class:'parse-errors'},`Block ${b.block_id}: ${b.reason}`)));
  const existing=await api('/api/releases');$('releases').replaceChildren(...existing.filter(r=>r.document_sha256===sha).map(r=>el('p',{},el('span',{class:'badge'},r.version),' · signed · '+r.fixture_count+' fixtures checked')));
 }
 async function loadDocument() {

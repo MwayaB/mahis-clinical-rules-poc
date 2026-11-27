@@ -12,7 +12,7 @@ import * as review from './review.js';
 import * as fixtures from './fixtures.js';
 import * as releases from './release.js';
 import * as emr from './emr.js';
-const staticFiles={'/':'guidelines.html','/guidelines.html':'guidelines.html','/digitise.html':'digitise.html','/review.html':'review.html','/emr.html':'emr.html','/style.css':'style.css','/common.js':'common.js','/guidelines.js':'guidelines.js','/digitise.js':'digitise.js','/review.js':'review.js','/emr.js':'emr.js','/triage.js':'triage.js','/samples/dose-guide/placeholder.pdf':'../samples/dose-guide/placeholder.pdf','/samples/triage/placeholder.pdf':'../samples/triage/placeholder.pdf'};
+const staticFiles={'/':'guidelines.html','/guidelines.html':'guidelines.html','/digitise.html':'digitise.html','/review.html':'review.html','/emr.html':'emr.html','/style.css':'style.css','/common.js':'common.js','/guidelines.js':'guidelines.js','/digitise.js':'digitise.js','/review.js':'review.js','/emr.js':'emr.js','/triage.js':'triage.js','/triage-review.js':'triage-review.js','/samples/dose-guide/placeholder.pdf':'../samples/dose-guide/placeholder.pdf','/samples/triage/placeholder.pdf':'../samples/triage/placeholder.pdf'};
 function readBody(req,max) {
  return new Promise((done,fail)=>{
   let size=0,chunks=[],failed=false;
