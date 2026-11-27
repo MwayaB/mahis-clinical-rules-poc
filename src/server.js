@@ -12,7 +12,9 @@ import * as review from './review.js';
 import * as fixtures from './fixtures.js';
 import * as releases from './release.js';
 import * as emr from './emr.js';
-const staticFiles={'/':'guidelines.html','/guidelines.html':'guidelines.html','/digitise.html':'digitise.html','/review.html':'review.html','/emr.html':'emr.html','/style.css':'style.css','/common.js':'common.js','/guidelines.js':'guidelines.js','/digitise.js':'digitise.js','/review.js':'review.js','/emr.js':'emr.js','/triage.js':'triage.js','/triage-review.js':'triage-review.js','/samples/dose-guide/placeholder.pdf':'../samples/dose-guide/placeholder.pdf','/samples/triage/placeholder.pdf':'../samples/triage/placeholder.pdf'};
+export const apiRoutes=[['GET', '/api/guidelines'], ['POST', '/api/guidelines'], ['GET', '/api/guidelines/:sha256'], ['POST', '/api/guidelines/:sha256/metadata'], ['POST', '/api/guidelines/:sha256/digitise'], ['GET', '/api/guidelines/:sha256/blocks'], ['POST', '/api/guidelines/:sha256/blocks'], ['POST', '/api/guidelines/:sha256/draft'], ['POST', '/api/rules/import'], ['GET', '/api/ir'], ['POST', '/api/ir/:id/edit'], ['POST', '/api/ir/:id/approve'], ['POST', '/api/ir/:id/reject'], ['GET', '/api/ir/:id/history'], ['GET', '/api/fixtures'], ['POST', '/api/fixtures'], ['GET', '/api/releases'], ['POST', '/api/releases'], ['GET', '/api/assessment/config'], ['POST', '/api/encounters'], ['GET', '/api/encounters/:id'], ['POST', '/api/encounters/:id/observations'], ['POST', '/api/encounters/:id/assess'], ['POST', '/api/encounters/:id/assess/:seq/override'], ['GET', '/api/patients'], ['POST', '/api/patients'], ['POST', '/api/patients/:id/observations'], ['POST', '/api/patients/:id/status'], ['GET', '/api/patients/:id/diagnoses'], ['POST', '/api/patients/:id/diagnoses'], ['POST', '/api/patients/:id/prescriptions/check'], ['GET', '/api/patients/:id/events'], ['GET', '/api/patients/:id/context'], ['POST', '/api/events/:seq/replay'], ['GET', '/api/sample-bundle']];
+const routeMatches=(method,path)=>apiRoutes.some(([m,p])=>m===method&&new RegExp('^'+p.replace(/:[^/]+/g,'[^/]+')+'$').test(path));
+const staticFiles={'/':'guidelines.html','/guidelines.html':'guidelines.html','/digitise.html':'digitise.html','/review.html':'review.html','/emr.html':'emr.html','/style.css':'style.css','/common.js':'common.js','/guidelines.js':'guidelines.js','/digitise.js':'digitise.js','/review.js':'review.js','/review-controls.js':'review-controls.js','/emr.js':'emr.js','/assessment.js':'assessment.js','/triage-review.js':'triage-review.js','/samples/dose-guide/placeholder.pdf':'../samples/dose-guide/placeholder.pdf','/samples/triage/placeholder.pdf':'../samples/triage/placeholder.pdf'};
 function readBody(req,max) {
  return new Promise((done,fail)=>{
   let size=0,chunks=[],failed=false;
@@ -39,9 +41,10 @@ export async function startServer({host='127.0.0.1',port=8080,dataDir=fileURLToP
    if(req.headers.host!==new URL(origin).host||req.headers.origin&&req.headers.origin!==origin||req.headers['sec-fetch-site']==='cross-site') throw new ApiError('Only same-origin loopback requests are accepted',403);
    const raw=req.url.split('?')[0];if(/%2f|%5c|\.\.|\\/i.test(raw)) throw new ApiError('Invalid path');
    const url=new URL(req.url,origin),path=url.pathname,method=req.method;
-   const queryKeys=path==='/api/guidelines'&&method==='POST'?['filename','document_id']:path==='/api/triage/config'?['release_version']:path==='/api/ir'?['document']:path==='/api/fixtures'?['node']:['/digitise.html','/review.html'].includes(path)?['document']:[];
+   const queryKeys=path==='/api/guidelines'&&method==='POST'?['filename','document_id']:path==='/api/assessment/config'?['release_version']:path==='/api/ir'?['document']:path==='/api/fixtures'?['node']:['/digitise.html','/review.html'].includes(path)?['document']:[];
    for(const key of url.searchParams.keys()) if(!queryKeys.includes(key)||url.searchParams.getAll(key).length!==1) throw new ApiError('Unknown or duplicate query parameter '+key);
    const who=()=>req.headers['x-user']??'local-user';const meta=()=>({actor:who(),now:clock(),keyDir});
+   if(path.startsWith('/api/')&&!routeMatches(method,path)) throw new ApiError('Route not found',404);
    let match;
    if(method==='GET'&&staticFiles[path]) {
     const file=staticFiles[path],ext=file.split('.').at(-1),types={html:'text/html',css:'text/css',js:'text/javascript',pdf:'application/pdf'};
@@ -62,7 +65,7 @@ export async function startServer({host='127.0.0.1',port=8080,dataDir=fileURLToP
     if(action==='blocks'&&method==='POST') return send(201,digitiser.manualBlock(store,sha,await jsonBody(req)));
     if(action==='draft'&&method==='POST') return send(200,drafts.generateDrafts(store,sha,await jsonBody(req),meta()));
    }
-   if(path==='/api/triage/drafts'&&method==='POST') return send(201,review.importTriageDraft(store,await jsonBody(req),meta()));
+   if(path==='/api/rules/import'&&method==='POST') return send(201,review.importRuleDraft(store,await jsonBody(req),meta()));
    if(path==='/api/ir'&&method==='GET') return send(200,drafts.listDrafts(store,url.searchParams.get('document')));
    if((match=/^\/api\/ir\/([^/]+)\/(edit|approve|reject|history)$/.exec(path))) {
     const id=decodeURIComponent(match[1]),action=match[2];
@@ -73,13 +76,13 @@ export async function startServer({host='127.0.0.1',port=8080,dataDir=fileURLToP
    if(path==='/api/fixtures'&&method==='POST') return send(200,fixtures.saveFixtures(store,await jsonBody(req)));
    if(path==='/api/releases'&&method==='GET') return send(200,releases.listReleases(store));
    if(path==='/api/releases'&&method==='POST') return send(201,releases.createRelease(store,await jsonBody(req),meta()));
-   if(path==='/api/triage/sample'&&method==='GET') return send(200,{ir:JSON.parse(readFileSync(new URL('../ir/triage_example.ir.json',import.meta.url))),fixtures:JSON.parse(readFileSync(new URL('../fixtures/triage_example.fixtures.json',import.meta.url)))});
-   if(path==='/api/triage/config'&&method==='GET') return send(200,encounters.triageConfiguration(store,url.searchParams.get('release_version'),{keyDir}));
+   if(path==='/api/assessment/config'&&method==='GET') return send(200,encounters.assessmentConfiguration(store,url.searchParams.get('release_version'),{keyDir}));
    if(path==='/api/encounters'&&method==='POST') return send(201,encounters.startEncounter(store,events,await jsonBody(req),meta()));
-   if((match=/^\/api\/encounters\/([^/]+)(?:\/(observations|triage|triage\/override))?$/.exec(path))) {
+   if((match=/^\/api\/encounters\/([^/]+)\/assess\/(\d+)\/override$/.exec(path))&&method==='POST') return send(200,encounters.overrideAssessment(store,events,decodeURIComponent(match[1]),Number(match[2]),await jsonBody(req),meta()));
+   if((match=/^\/api\/encounters\/([^/]+)(?:\/(observations|assess))?$/.exec(path))) {
     const id=decodeURIComponent(match[1]),action=match[2];
     if(!action&&method==='GET') return send(200,encounters.readEncounter(store,events,id,meta()));
-    if(method==='POST') {const fn={observations:encounters.recordEncounterObservation,triage:encounters.scoreEncounter,'triage/override':encounters.overrideEncounter}[action];if(fn) return send(200,fn(store,events,id,await jsonBody(req),meta()));}
+    if(method==='POST') {const fn={observations:encounters.recordEncounterObservation,assess:encounters.assessEncounter}[action];if(fn) return send(200,fn(store,events,id,await jsonBody(req),meta()));}
    }
    if(path==='/api/patients'&&method==='GET') return send(200,emr.listPatients(store));
    if(path==='/api/patients'&&method==='POST') return send(201,emr.createPatient(store,events,await jsonBody(req),meta()));

@@ -1,4 +1,6 @@
-import { validateTriageResults } from './triage-records.js';
+import { checkObservation,inputCatalog } from './inputs.js';
+import { upcastEvent } from './upcast.js';
+import { validateEnvelope } from './assessment-records.js';
 import { defaultTerminology,isKnownCode,labelFor } from './terminology.js';
 import { checkNumber, checkPregnancy,checkTriageObservation,triageEntry } from './plausibility.js';
 import { DatabaseSync } from 'node:sqlite';
@@ -10,8 +12,8 @@ const shapes={
  'advice-shown':['rule_ids','severities','package_version','engine_version','inputs_hash','context_up_to_seq','rules_sha256','manifest_sha256','today','advice'],
  'advice-response':['advice_ref','action','reason'],
  'encounter-opened':['encounter_id','population'],
- 'triage-recorded':['encounter_id','population','results','package_version','engine_version','inputs_hash','context_up_to_seq','rules_sha256','manifest_sha256'],
- 'triage-overridden':['encounter_id','triage_ref','category','reason']
+ 'assessment-recorded':['encounter_id','population','scope','today','result','package_version','engine_version','inputs_hash','context_up_to_seq','rules_sha256','manifest_sha256'],
+ 'assessment-overridden':['encounter_id','assessment_seq','node_id','action','reason']
 };
 export function validDay(s) {
  if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
@@ -23,7 +25,9 @@ export function openEventLog(path,{terminology=defaultTerminology}={}) {
  CREATE TABLE IF NOT EXISTS events (seq INTEGER PRIMARY KEY AUTOINCREMENT,event_id TEXT NOT NULL UNIQUE,patient_id TEXT NOT NULL,type TEXT NOT NULL,payload TEXT NOT NULL,occurred_at TEXT NOT NULL);
  CREATE TRIGGER IF NOT EXISTS no_update BEFORE UPDATE ON events BEGIN SELECT RAISE(ABORT,'append-only'); END;
  CREATE TRIGGER IF NOT EXISTS no_delete BEFORE DELETE ON events BEGIN SELECT RAISE(ABORT,'append-only'); END;`);
- const decode=r=>r?{...r,payload:JSON.parse(r.payload)}:null;
+ const raw=r=>r?{...r,payload:JSON.parse(r.payload)}:null;
+ const lookup=id=>raw(sql.prepare('SELECT * FROM events WHERE event_id=?').get(id));
+ const decode=r=>r?upcastEvent(raw(r),lookup):null;
  const byId=id=>decode(sql.prepare('SELECT * FROM events WHERE event_id=?').get(id));
  const api={
   terminology,
@@ -32,13 +36,12 @@ export function openEventLog(path,{terminology=defaultTerminology}={}) {
    if(!nonempty(event.event_id)||!nonempty(event.patient_id)||!validTimestamp(event.occurred_at)) errors.push('Invalid event identity or timestamp');
    const allowed=shapes[event.type];const p=event.payload;
    if(!allowed) errors.push('Unknown event type');
-   else if(fields(p,[...allowed,'supersedes',...(event.type==='patient-registered'?['age_years']:[]),...(event.type==='diagnosis-recorded'?['label_entered']:[]),...(event.type==='observation-recorded'?['encounter_id']:[])],allowed,'payload',errors)) {
+   else if(fields(p,[...allowed,'supersedes',...(event.type==='patient-registered'?['age_years']:[]),...(event.type==='diagnosis-recorded'?['label_entered']:[]),...(event.type==='observation-recorded'?['encounter_id','input_definition']:[])],allowed,'payload',errors)) {
     switch(event.type) {
-     case 'patient-registered': if(p.age_years!==undefined) checkNumber('age_years',p.age_years);if(!nonempty(p.name)||!['F','M','U'].includes(p.sex)) errors.push('Invalid registration');break;
+     case 'patient-registered': if(p.age_years!==undefined) checkNumber('age_years',p.age_years);if(!nonempty(p.name)||!inputCatalog.find(d=>d.name==='sex').domain.values.includes(p.sex)) errors.push('Invalid registration');break;
      case 'observation-recorded': {
-      if(p.field==='weight_kg') checkNumber('weight_kg',p.value);
-      else if(triageEntry.fields.some(f=>f.input===p.field)) {checkTriageObservation(p.field,p.value);if(!nonempty(p.encounter_id)) errors.push('Triage observation requires encounter_id');}
-      else errors.push('Unknown observation field');
+      checkObservation(p.field,p.value,p.input_definition);
+      if(!['weight_kg','proposed_atc','proposed_tablets'].includes(p.field)&&!nonempty(p.encounter_id)) errors.push('Generic encounter input requires encounter_id');
       if(p.encounter_id!==undefined) {const encounter=api.findEncounter(p.encounter_id);if(!encounter||encounter.patient_id!==event.patient_id) errors.push('Unknown or wrong-patient encounter');}
       break;
      }
@@ -60,22 +63,23 @@ export function openEventLog(path,{terminology=defaultTerminology}={}) {
      case 'encounter-opened': {
       if(!nonempty(p.encounter_id)||!nonempty(p.population)||api.findEncounter(p.encounter_id)||!api.listForPatient(event.patient_id).some(e=>e.type==='patient-registered')) errors.push('Invalid encounter');break;
      }
-     case 'triage-recorded': {
-      const encounter=api.findEncounter(p.encounter_id);
-      if(!encounter||encounter.patient_id!==event.patient_id||encounter.payload.population!==p.population) errors.push('Invalid triage encounter');
-      validateTriageResults(p.results,{fields,nonempty},errors);
-      if(!nonempty(p.package_version)||!nonempty(p.engine_version)||![p.inputs_hash,p.rules_sha256,p.manifest_sha256].every(x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x))||p.context_up_to_seq!==api.listForPatient(event.patient_id).at(-1)?.seq) errors.push('Invalid triage audit cutoff or metadata');
-      if(Array.isArray(p.results)&&p.results.some(r=>r.package_version!==p.package_version||r.engine_version!==p.engine_version||r.inputs_hash!==p.inputs_hash)) errors.push('Inconsistent triage metadata');break;
+     case 'assessment-recorded': {
+      const encounter=p.encounter_id===null?null:api.findEncounter(p.encounter_id);
+      if(p.encounter_id!==null&&(!encounter||encounter.patient_id!==event.patient_id||encounter.payload.population!==p.population)) errors.push('Invalid assessment encounter');
+      validateEnvelope(p.result,errors);
+      if(!['all','patient','encounter'].includes(p.scope)||!validDay(p.today)||!nonempty(p.package_version)||!nonempty(p.engine_version)||! /^sha256:[a-f0-9]{64}$/.test(p.inputs_hash)||![p.rules_sha256,p.manifest_sha256].every(x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x))||!Number.isSafeInteger(p.context_up_to_seq)||p.context_up_to_seq<1||p.context_up_to_seq>(api.listForPatient(event.patient_id).at(-1)?.seq??0)) errors.push('Invalid assessment cutoff or metadata');
+      if(p.result.package_version!==p.package_version||p.result.engine_version!==p.engine_version||p.result.inputs_hash!==p.inputs_hash) errors.push('Inconsistent assessment metadata');break;
      }
-     case 'triage-overridden': {
-      const prior=byId(p.triage_ref);
-      if(!prior||prior.patient_id!==event.patient_id||prior.type!=='triage-recorded'||prior.payload.encounter_id!==p.encounter_id||!prior.payload.results.every(r=>r.status==='scored')||!nonempty(p.category)||!nonempty(p.reason)) errors.push('Invalid triage override');break;
+     case 'assessment-overridden': {
+      const prior=api.listForPatient(event.patient_id,{upToSeq:p.assessment_seq}).find(e=>e.seq===p.assessment_seq);
+      const results=prior?.payload.result?[prior.payload.result]:prior?.payload.results??[];
+      if(!prior||prior.type!=='assessment-recorded'||prior.payload.encounter_id!==p.encounter_id||!results.some(r=>r.node_id===p.node_id)||!nonempty(p.action)||!nonempty(p.reason)) errors.push('Invalid assessment override');break;
      }
      case 'advice-response': {const ref=byId(p.advice_ref);if(!ref||ref.patient_id!==event.patient_id||ref.type!=='advice-shown'||!['accepted','overridden'].includes(p.action)||typeof p.reason!=='string'||p.action==='overridden'&&!nonempty(p.reason)) errors.push('Invalid advice response');break;}
     }
     if(Object.hasOwn(p,'supersedes')) {
      const prior=byId(p.supersedes);
-     if(!prior||prior.patient_id!==event.patient_id||prior.type!==event.type||prior.payload.field!==p.field||['advice-shown','advice-response','encounter-opened','triage-recorded','triage-overridden'].includes(event.type)||prior.payload.encounter_id!==p.encounter_id) errors.push('Invalid supersedes target');
+     if(!prior||prior.patient_id!==event.patient_id||prior.type!==event.type||prior.payload.field!==p.field||['advice-shown','advice-response','encounter-opened','assessment-recorded','assessment-overridden'].includes(event.type)||prior.payload.encounter_id!==p.encounter_id) errors.push('Invalid supersedes target');
     }
    }
    if(errors.length) throw new Error(errors.join('; '));

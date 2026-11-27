@@ -1,0 +1,21 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { renderResults as triageResultView,initAssessment as initTriage } from '../../../public/assessment.js';
+// Minimal DOM surface for verifying rendered output, without adding a browser/DOM dependency.
+class Element {
+ constructor(tag='div',text='') {this.tag=tag;this.text=text;this.children=[];this.attrs={};this.value='';this.hidden=false;this.listeners={};}
+ setAttribute(k,v) {this.attrs[k]=v;if(k==='value') this.value=String(v);}
+ get className() {return this.attrs.class??'';} set className(v) {this.attrs.class=v;}
+ append(...children) {this.children.push(...children);}
+ replaceChildren(...children) {this.children=[...children];}
+ addEventListener(name,fn) {this.listeners[name]=fn;}
+ focus() {}
+ get textContent() {return this.text+this.children.map(c=>c.textContent??String(c)).join(' ');} set textContent(t) {this.text=String(t);this.children=[];}
+}
+function dom(t) {const oldDocument=globalThis.document,oldNode=globalThis.Node,oldFetch=globalThis.fetch;const nodes=new Map();globalThis.Node=Element;globalThis.document={createElement:tag=>new Element(tag),createTextNode:t=>new Element('#text',t),getElementById:id=>{if(!nodes.has(id)) nodes.set(id,new Element());return nodes.get(id);}};t.after(()=>{globalThis.document=oldDocument;globalThis.Node=oldNode;globalThis.fetch=oldFetch;});return nodes;}
+const metadata={node_type:'scored_triage',missing:[],invalid:[],payload:{renderer:'category'},node_id:'triage-adult-vitals',package_version:'fixture',engine_version:'0.1.0',contains_placeholders:true,inputs_hash:'a'.repeat(64)};
+const scored={...metadata,status:'ok',outcome:{category:'urgent'},payload:{renderer:'category',score:3,components:[{name:'resp_rate',value:0,points:3,band_id:'resp_rate:numeric:0'}],overrides_fired:[]}};
+function all(node,predicate) {return [node,...node.children.flatMap(c=>c instanceof Element?all(c,predicate):[])].filter(predicate);}
+test('triage renderer shows no score category colour or components for incomplete and invalid results',t=>{dom(t);for(const r of [{...metadata,status:'incomplete',missing:['avpu']},{...metadata,status:'invalid',invalid:[{input:'avpu',value:'unknown'}]}]) {const view=triageResultView([r]);assert.match(view.textContent,/Cannot assess:/);assert.equal(all(view,n=>n.className.split(' ').includes('triage-category')).length,0);assert.equal(all(view,n=>n.tag==='table').length,0);assert.doesNotMatch(view.textContent,/Score:/);}});
+test('triage renderer displays the API category and components without scoring inputs',t=>{dom(t);const view=triageResultView([scored]);assert.match(view.textContent,/urgent/);assert.match(view.textContent,/Score: 3/);assert.match(view.textContent,/resp_rate:numeric:0/);assert.equal(all(view,n=>n.tag==='table').length,1);});
+test('patient header clears an earlier category on incomplete invalid or changed observations',async t=>{const nodes=dom(t);document.getElementById('active-release').value='fixture';let state={encounter_id:'e',population:'adult',ctx:{avpu:null},current:[{result:scored,event:{seq:1}}],overrides:[]};globalThis.fetch=async path=>({ok:true,json:async()=>path.startsWith('/api/assessment/config')?{fields:[],populations:['adult'],nodes:[{node_id:metadata.node_id,categories_order:['standard','urgent','emergency']}]}:state});const panel=initTriage({refreshPatient:async()=>{}}),history=[{type:'encounter-opened',payload:{encounter_id:'e'}}];await panel.selectPatient('p',history);assert.match(nodes.get('assessment-header').textContent,/urgent/);for(const result of [{...metadata,status:'incomplete',missing:['avpu']},{...metadata,status:'invalid',invalid:[{input:'avpu',value:'unknown'}]},null]) {state={...state,current:result?[{result,event:{seq:1}}]:[]};await panel.selectPatient('p',history);assert.doesNotMatch(nodes.get('assessment-header').textContent,/urgent|standard|emergency/);assert.equal(nodes.get('assessment-override').hidden,true);}assert.equal(all(nodes.get('assessment-header'),n=>n.className.split(' ').includes('triage-category')).length,0);});

@@ -1,4 +1,5 @@
-import { replayTriage } from './encounters.js';
+import { inputCatalog } from './inputs.js';
+import { replayAssessment } from './assessment.js';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { exact,text,ApiError,timestamp } from './prototype/store.js';
@@ -9,7 +10,7 @@ export function listPatients(store) {return store.db.prepare('SELECT record FROM
 export function getPatient(store,id) {text(id,'patient ID');const row=store.db.prepare('SELECT record FROM patients WHERE patient_id=?').get(id);if(!row) throw new ApiError('Patient not found',404);return JSON.parse(row.record);}
 const args=(db,id,now)=>({db,patientId:id,today:timestamp(now).slice(0,10),occurredAt:now,eventId:randomUUID()});
 export function createPatient(store,db,body,{now}) {
- exact(body,['name','sex','patient_id','age_years'],['name','sex']);text(body.name,'name');if(!['F','M','U'].includes(body.sex)) throw new ApiError('Sex must be F, M or U');
+ exact(body,['name','sex','patient_id','age_years'],['name','sex']);text(body.name,'name');if(!inputCatalog.find(d=>d.name==='sex').domain.values.includes(body.sex)) throw new ApiError('Sex must be F, M or U');
  const id=body.patient_id===undefined?randomUUID():text(body.patient_id,'patient ID');if(store.db.prepare('SELECT 1 FROM patients WHERE patient_id=?').get(id)) throw new ApiError('Patient ID already exists',409);
  workflow.register({...args(db,id,now),name:body.name,sex:body.sex,age_years:body.age_years});
  const record={patient_id:id,name:body.name,sex:body.sex,age_years:body.age_years??null,created_at:now,placeholder:true};store.db.prepare('INSERT INTO patients VALUES(?,?)').run(id,store.encode(record));return record;
@@ -39,7 +40,7 @@ export function checkPrescription(store,db,id,body,{now,keyDir}) {
 export function replayAdvice(store,db,seq,{keyDir}) {
  if(!Number.isSafeInteger(seq)||seq<1) throw new ApiError('Invalid event seq');
  let found;for(const p of listPatients(store)) {found=db.listForPatient(p.patient_id,{upToSeq:seq}).find(e=>e.seq===seq);if(found) break;}
- if(!found||!['advice-shown','triage-recorded'].includes(found.type)) throw new ApiError('Advice event not found',404);
- const pkg=loadRelease(store,found.payload.package_version,{keyDir});const result=(found.type==='triage-recorded'?replayTriage:workflow.replay)({db,patientId:found.patient_id,adviceEvent:found,loadedPackage:pkg});
+ if(!found||!['advice-shown','assessment-recorded'].includes(found.type)) throw new ApiError('Advice event not found',404);
+ const pkg=loadRelease(store,found.payload.package_version,{keyDir});const result=replayAssessment({db,patientId:found.patient_id,adviceEvent:found,loadedPackage:pkg});
  return {matches:true,event_seq:seq,result};
 }

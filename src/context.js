@@ -14,7 +14,7 @@ export function buildContext(events,{today,terminologyVersion=defaultTerminology
   const p=e.payload;
   if(e.type==='diagnosis-recorded'&&['confirmed','presumptive'].includes(p.certainty)) ctx.active_diagnoses.push({icd10:p.icd10,certainty:p.certainty,terminology_version:p.terminology_version??null});
   if(e.type==='patient-registered') {ctx.sex=p.sex;ctx.age_years=p.age_years??null;}
-  if(e.type==='observation-recorded'&&p.field==='weight_kg') set('weight_kg',p.value,e);
+  if(e.type==='observation-recorded'&&['weight_kg','proposed_atc','proposed_tablets'].includes(p.field)&&!p.encounter_id) set(p.field,p.value,e);
   if(e.type==='status-recorded'&&p.field==='pregnant') set('pregnant',p.value,e);
   if(e.type==='prescription-drafted') {set('proposed_atc',p.atc,e);set('proposed_tablets',p.tablets,e);}
  }

@@ -20,7 +20,7 @@ export function fixtureGate(rules,fixtures,terminology=defaultTerminology) {
   if(!f||typeof f.name!=='string'||!f.ctx||!Array.isArray(f.expect)||!Array.isArray(f.kinds)||!f.kinds.length||f.kinds.some(k=>typeof k!=='string')||Object.keys(f).some(k=>!['name','ctx','expect','kinds','scope','node_id'].includes(k))) throw new Error('Invalid fixture '+f?.name+'; explicit kinds required');
   const scope=f.scope??(f.ctx.population!==undefined?'encounter':'patient'),actual=assess(pkg,f.ctx,{scope});
   let expectedView;
-  if(f.expect.every(e=>typeof e==='string')) expectedView=adviceFromAssessments(pkg,f.ctx,actual).map(a=>a.rule_id).sort();
+  if(scope==='patient'&&f.expect.every(e=>typeof e==='string')) expectedView=adviceFromAssessments(pkg,f.ctx,actual).map(a=>a.rule_id).sort();
   else {
    if(f.expect.some(e=>!e||!e.node_id||!e.status)) throw new Error('Incomplete triage fixture expectation '+f.name);
    expectedView=actual.map((r,i)=>{const expected=f.expect[i];if(!expected) return {};const view=Object.hasOwn(expected,'outcome')||Object.hasOwn(expected,'node_type')?r:getType(r.node_type).legacyResult?.(r,pkg)??r;return Object.fromEntries(Object.keys(expected).map(k=>[k,view[k]]));});
@@ -60,4 +60,3 @@ export function compile(ir,{dir,privateKey,fixtures,packageVersion='poc-0.1.0',t
  return manifest;
 }
 
-export const triageFixtureGate=fixtureGate;

@@ -1,0 +1,86 @@
+{
+  "placeholder": true,
+  "pregnancy_sex": "F",
+  "limits": {
+    "weight_kg": {
+      "min": 0.5,
+      "max": 200
+    },
+    "age_years": {
+      "min": 0,
+      "max": 120
+    },
+    "pregnancy_age": {
+      "min": 10,
+      "max": 60
+    }
+  },
+  "fields": [
+    {
+      "name": "weight_kg",
+      "label": "Weight (kg)",
+      "kind": "numeric",
+      "domain": {
+        "min": 0.5,
+        "max": 200
+      }
+    },
+    {
+      "name": "age_years",
+      "label": "Age (years)",
+      "kind": "numeric",
+      "domain": {
+        "min": 0,
+        "max": 120
+      },
+      "readonly": true
+    },
+    {
+      "name": "sex",
+      "label": "Recorded sex",
+      "kind": "ordinal",
+      "domain": {
+        "values": [
+          "F",
+          "M",
+          "U"
+        ]
+      },
+      "readonly": true
+    },
+    {
+      "name": "pregnant",
+      "label": "Pregnancy status",
+      "kind": "boolean",
+      "domain": {}
+    },
+    {
+      "name": "proposed_atc",
+      "label": "Proposed ATC code",
+      "kind": "string",
+      "domain": {
+        "pattern": "^[A-Z][0-9]{2}[A-Z]{2}[0-9]{2}$"
+      },
+      "nullable": true
+    },
+    {
+      "name": "proposed_tablets",
+      "label": "Proposed tablet count",
+      "kind": "numeric",
+      "domain": {
+        "min": 0,
+        "integer": true
+      },
+      "nullable": true
+    },
+    {
+      "name": "today",
+      "label": "Assessment day",
+      "kind": "string",
+      "domain": {
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      },
+      "readonly": true
+    }
+  ]
+}

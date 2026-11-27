@@ -1,3 +1,4 @@
+import {approvalControls,fixturePanel,jsonFixtures} from './review-controls.js';
 import { triageReviewEditor } from './triage-review.js';
 import {$,el,api,form,action,notice,error,sourceSelection,blockCard,input,field} from './common.js';
 let sha=sourceSelection(new URLSearchParams(location.search).get('document'));
@@ -22,11 +23,11 @@ function whenEditor(n) {
  return {view:el('div',{},container,button),value:()=>{const entries=rows.filter(r=>r.row.isConnected).map(r=>[r.key.value,JSON.parse(r.value.value)]);if(new Set(entries.map(x=>x[0])).size!==entries.length) throw Error('Duplicate equality fields');return Object.fromEntries(entries);}};
 }
 async function fixtureEditor(entry) {
- const n=entry.node,f=await api('/api/fixtures?node='+encodeURIComponent(n.id)),box=el('details',{class:'fixture-editor'},el('summary',{},`Authored fixtures · ${f.entries.length} saved${f.stale?' · STALE — save for current revision':''}`));
+ const n=entry.node,f=await api('/api/fixtures?node='+encodeURIComponent(n.id)),box=fixturePanel(entry,f);
  const edit=el('form',{method:'post',action:'/api/fixtures','aria-label':'Fixtures for '+n.id}),rows=el('div'),controls=[];
  function add(data={name:'',ctx:{},expect:[]}) {
   const prefix=n.id+'-fixture-'+controls.length,row=el('div',{class:'card compact'}),c={row,original:data.ctx};
-  for(const [key,label,value,type] of [['name','Fixture name',data.name,'text'],['sex','Sex (blank means not recorded)',data.ctx.sex??'','text'],['age_years','Age years (blank means not recorded)',data.ctx.age_years??'','number'],['active_diagnoses','Active diagnoses (JSON array)',JSON.stringify(data.ctx.active_diagnoses??[]),'text'],['today','Today (YYYY-MM-DD)',data.ctx.today??'','date'],['weight_kg','Weight kg (blank means not recorded)',data.ctx.weight_kg??'','number'],['proposed_atc','Proposed ATC (blank means not recorded)',data.ctx.proposed_atc??'','text'],['proposed_tablets','Proposed tablet count (blank means not recorded)',data.ctx.proposed_tablets??'','number'],['expect','Expected rule IDs (comma separated; blank means no advice)',data.expect.join(', '),'text']]) {
+  for(const [key,label,value,type] of [['name','Fixture name',data.name,'text'],['kinds','Fixture kinds (comma separated)',(data.kinds??[]).join(', '),'text'],['sex','Sex (blank means not recorded)',data.ctx.sex??'','text'],['age_years','Age years (blank means not recorded)',data.ctx.age_years??'','number'],['active_diagnoses','Active diagnoses (JSON array)',JSON.stringify(data.ctx.active_diagnoses??[]),'text'],['today','Today (YYYY-MM-DD)',data.ctx.today??'','date'],['weight_kg','Weight kg (blank means not recorded)',data.ctx.weight_kg??'','number'],['proposed_atc','Proposed ATC (blank means not recorded)',data.ctx.proposed_atc??'','text'],['proposed_tablets','Proposed tablet count (blank means not recorded)',data.ctx.proposed_tablets??'','number'],['expect','Expected rule IDs (comma separated; blank means no advice)',data.expect.join(', '),'text']]) {
    const control=input(prefix+'-'+key,label,value,type,{...(type==='number'?{step:'any'}:{}),...(['name','today'].includes(key)?{required:true}:{})});c[key]=control.querySelector('input');row.append(control);
   }
   const preg=selectField(prefix+'-pregnant','Pregnancy input',[['null','Not recorded'],['true','Pregnant'],['false','Not pregnant']],String(data.ctx.pregnant??null));c.pregnant=preg.querySelector('select');row.append(preg);controls.push(c);rowButtons(row,rows);
@@ -36,35 +37,30 @@ async function fixtureEditor(entry) {
  const loadButton=el('button',{type:'button',class:'secondary'},'Load sample fixtures');action(loadButton,async()=>{const sample=await api('/api/sample-bundle');if(sample.document_sha256!==sha) throw Error('Sample fixtures apply only to the shipped sample PDF');rows.replaceChildren();controls.length=0;(sample.fixtures[entry.block.id]??[]).forEach(add);notice('Sample fixture entries loaded. Save them to attach to this content revision.');});
  edit.append(rows,el('div',{class:'toolbar'},addButton,loadButton,el('button',{type:'submit'},'Save fixtures')));
  form(edit,async()=>{
-  const entries=controls.filter(c=>c.row.isConnected).map(c=>({name:c.name.value,ctx:{...c.original,sex:c.sex.value||null,age_years:c.age_years.value===''?null:Number(c.age_years.value),active_diagnoses:JSON.parse(c.active_diagnoses.value),today:c.today.value,weight_kg:c.weight_kg.value===''?null:Number(c.weight_kg.value),pregnant:c.pregnant.value==='null'?null:c.pregnant.value==='true',proposed_atc:c.proposed_atc.value||null,proposed_tablets:c.proposed_tablets.value===''?null:Number(c.proposed_tablets.value)},expect:c.expect.value.split(',').map(s=>s.trim()).filter(Boolean)}));
+  const entries=controls.filter(c=>c.row.isConnected).map(c=>({name:c.name.value,kinds:c.kinds.value.split(',').map(s=>s.trim()).filter(Boolean),ctx:{...c.original,sex:c.sex.value||null,age_years:c.age_years.value===''?null:Number(c.age_years.value),active_diagnoses:JSON.parse(c.active_diagnoses.value),today:c.today.value,weight_kg:c.weight_kg.value===''?null:Number(c.weight_kg.value),pregnant:c.pregnant.value==='null'?null:c.pregnant.value==='true',proposed_atc:c.proposed_atc.value||null,proposed_tablets:c.proposed_tablets.value===''?null:Number(c.proposed_tablets.value)},expect:c.expect.value.split(',').map(s=>s.trim()).filter(Boolean)}));
   await api('/api/fixtures',{node_id:n.id,entries});notice('Authored fixtures saved for current content.');await refreshNodes();
  });
  box.append(el('p',{class:'muted'},'At least one matching and one non-matching case with complete inputs are required. Generated boundaries do not replace authored cases.'),edit,el('details',{},el('summary',{},`${f.generated.length} generated boundary checks (read only)`),el('pre',{class:'hash'},json(f.generated))));return box;
 }
 async function triageCard(entry) {
- const n=entry.node,box=el('section',{class:'card'},el('h2',{},'Scored triage · '+n.id),el('p',{},`${n.status} · ${entry.approvals.length} of 2 approvals`),blockCard(entry.block));
+ const n=entry.node,box=el('section',{class:'card'},el('h2',{},n.type.replaceAll('_',' ')+' · '+n.id),el('p',{},`${n.status} · ${entry.approvals.length} of ${n.risk==='high'?2:1} approvals`),blockCard(entry.block));
  if(n.parse_errors?.length) box.append(el('div',{class:'parse-errors'},n.parse_errors.join('; ')));
- const editable=['scope','parameters','score_bands','overrides','categories_order'],editor=el('textarea',{rows:20,required:true},json(Object.fromEntries(editable.map(k=>[k,n[k]]))));
- let structured;try{structured=triageReviewEditor(n);}catch{structured=null;}
+ const editable=entry.type_info.fields,editor=el('textarea',{rows:20,required:true},json(Object.fromEntries(editable.map(k=>[k,n[k]]))));
+ let structured;try{structured=n.type==='scored_triage'?triageReviewEditor(n):null;}catch{structured=null;}
  const edit=el('form',{method:'post',action:`/api/ir/${n.id}/edit`,'aria-label':'Review triage inputs '+n.id},structured?.view??el('p',{},'Correct the rule schema in the advanced editor to restore the structured inputs.'),el('button',{type:'submit',disabled:!structured},'Save triage revision'));
  form(edit,async()=>{await api(`/api/ir/${n.id}/edit`,structured.value());notice('Triage revision saved; previous approvals reset.');await refreshNodes();});
  const advancedForm=el('form',{method:'post',action:`/api/ir/${n.id}/edit`,'aria-label':'Advanced triage JSON '+n.id},field(n.id+'-triage-json','Authored triage fields (JSON)',editor),el('button',{type:'submit',class:'secondary'},'Save advanced triage edit'));
  form(advancedForm,async()=>{await api(`/api/ir/${n.id}/edit`,JSON.parse(editor.value));notice('Triage revision saved; previous approvals reset.');await refreshNodes();});
  const advanced=el('details',{open:!structured},el('summary',{},'Advanced JSON editor'),advancedForm);
- const approval=el('form',{method:'post',action:`/api/ir/${n.id}/approve`,'aria-label':'Approve triage '+n.id}),reviewer=input(n.id+'-reviewer','Reviewer ID (required)','','text',{required:true});approval.append(reviewer,el('button',{type:'submit'},'Approve current triage revision'));
- form(approval,async()=>{await api(`/api/ir/${n.id}/approve`,{reviewer:reviewer.querySelector('input').value});notice('Approval recorded for triage content.');await refreshNodes();});
- const f=await api('/api/fixtures?node='+encodeURIComponent(n.id)),fixturesText=el('textarea',{rows:14,required:true},json(f.entries));
- const fixtureForm=el('form',{method:'post',action:'/api/fixtures','aria-label':'Triage fixtures '+n.id},field(n.id+'-triage-fixtures','Authored triage fixtures (JSON)',fixturesText));
- const load=el('button',{type:'button',class:'secondary'},'Load sample triage fixtures');action(load,async()=>{const sample=await api('/api/triage/sample');if(n.id!==sample.ir.nodes[0].id&&sha!==sample.ir.document.checksum.slice('sha256:'.length)) throw Error('Sample fixtures do not match this rule');fixturesText.value=json(sample.fixtures.map(f=>({...f,expect:f.expect.map(e=>({...e,node_id:n.id}))}))); notice('Sample fixtures loaded; inspect and save them for this revision.');});fixtureForm.append(load,el('button',{type:'submit'},'Save triage fixtures'));
- form(fixtureForm,async()=>{await api('/api/fixtures',{node_id:n.id,entries:JSON.parse(fixturesText.value)});notice('Triage fixtures saved for current revision.');await refreshNodes();});
+ const approval=approvalControls(entry,refreshNodes),fixtures=await jsonFixtures(entry,sha,refreshNodes);
  const history=el('details',{},el('summary',{},'Triage revision and approval history')),historyOut=el('pre'),loadHistory=el('button',{type:'button',class:'secondary'},'Load history');action(loadHistory,async()=>{historyOut.textContent=json(await api(`/api/ir/${n.id}/history`));});history.append(loadHistory,historyOut);
- box.append(edit,advanced,approval,el('details',{class:'fixture-editor'},el('summary',{},`Authored triage fixtures · ${f.entries.length}${f.stale?' · STALE':''}`),fixtureForm),el('p',{class:'hash'},entry.content_hash),history);return box;
+ box.append(edit,advanced,approval,fixtures,el('p',{class:'hash'},entry.content_hash),history);return box;
 }
 
 async function nodeCard(entry) {
- if(entry.node.type==='scored_triage') return triageCard(entry);
+ if(!['table','predicate'].includes(entry.node.type)) return triageCard(entry);
  const n=entry.node,box=el('section',{class:'card'}),left=el('div',{class:'review-source'},blockCard(entry.block)),right=el('div');
- box.append(el('div',{class:'section-heading'},el('h2',{},`${n.type==='table'?'Weight table':'Pregnancy predicate'} · ${entry.block.id}`),el('span',{class:'badge'},`${n.status} · ${entry.approvals.length} of 2 approvals`)));
+ box.append(el('div',{class:'section-heading'},el('h2',{},`${n.type==='table'?'Weight table':'Pregnancy predicate'} · ${entry.block.id}`),el('span',{class:'badge'},`${n.status} · ${entry.approvals.length} of ${n.risk==='high'?2:1} approvals`)));
  if(n.parse_errors?.length) right.append(el('div',{class:'parse-errors'},el('strong',{},'Parse errors'),el('ul',{},n.parse_errors.map(e=>el('li',{},e)))));
  const edit=el('form',{method:'post',action:`/api/ir/${n.id}/edit`,'aria-label':'Edit '+entry.block.id}),atc=input(n.id+'-atc','ATC code (required)',n.applies_to.atc,'text',{required:true}),message=field(n.id+'-message','Placeholder advice message',el('textarea',{rows:3,required:true},n.message_template??n.message));
  const applicable=el('fieldset',{},el('legend',{},'Rule applicability · checked before conditions'));
@@ -85,9 +81,7 @@ async function nodeCard(entry) {
   if(n.type==='table') {body.bands=structured.value();body.message_template=message.querySelector('textarea').value;}else{body.when=structured.value();body.severity=severity.querySelector('select').value;body.message=message.querySelector('textarea').value;}
   await api(`/api/ir/${n.id}/edit`,body,{headers:{'Content-Type':'application/json','X-User':$('editor').value}});notice('Revision saved. Previous approvals reset.');await refreshNodes();
  });
- const approval=el('form',{method:'post',action:`/api/ir/${n.id}/approve`,'aria-label':'Review decision for '+entry.block.id});const reviewer=input(n.id+'-reviewer','Reviewer ID (required)','','text',{required:true});
- const approve=el('button',{type:'submit',value:'approve'},'Approve current revision'),reject=el('button',{type:'submit',class:'secondary',value:'reject'},'Reject'),reason=input(n.id+'-reason','Rejection reason (required when rejecting)');approval.append(el('h3',{},'Review decision'),reviewer,reason,el('div',{class:'toolbar'},approve,reject));
- form(approval,async(_,submitter)=>{const actionName=submitter.value,body={reviewer:reviewer.querySelector('input').value};if(actionName==='reject') {body.reason=reason.querySelector('input').value;if(!body.reason.trim()) throw Error('Enter a reason before rejecting');}await api(`/api/ir/${n.id}/${actionName}`,body);notice(actionName==='approve'?'Approval recorded for this content.':'Node returned to draft.');await refreshNodes();});
+ const approval=approvalControls(entry,refreshNodes);
  right.append(edit,approval,el('p',{class:'hash'},'Content SHA-256: '+entry.content_hash),el('p',{class:'muted'},'Approvers: '+(entry.approvals.map(a=>a.reviewer).join(', ')||'none')));box.append(el('div',{class:'review-grid'},left,right));box.append(await fixtureEditor(entry));
  const history=el('details',{},el('summary',{},'Revision & approval history'));const load=el('button',{type:'button',class:'secondary'},'Show history'),out=el('pre',{class:'hash'});action(load,async()=>{out.textContent=json(await api(`/api/ir/${n.id}/history`));});history.append(load,out);box.append(history);return box;
 }
@@ -109,6 +103,6 @@ $('document').addEventListener('change',()=>{sha=$('document').value;loadDocumen
 
 const importForm=document.getElementById('triage-import');
 if(importForm) {
- action($('load-triage-sample'),async()=>{const sample=await api('/api/triage/sample');if(sha!==sample.ir.document.checksum.slice('sha256:'.length)) throw Error('Upload and select the combined placeholder PDF before importing its authored triage rule');$('triage-node-json').value=json(sample.ir.nodes[0]);notice('Authored placeholder triage sample loaded; no PDF extraction was performed.');});
- form(importForm,async()=>{if(!sha) throw Error('Select the source document first');await api('/api/triage/drafts',{document_sha256:sha,node:JSON.parse($('triage-node-json').value)});notice('Triage imported as draft; two reviewers and fixtures are required.');await refreshNodes();});
+ action($('load-triage-sample'),async()=>{const sample=await api('/api/sample-bundle');if(sha!==sample.document_sha256) throw Error('Upload and select the combined placeholder PDF before importing its authored rule');$('triage-node-json').value=json(Object.values(sample.authored_rules_by_block)[0]);notice('Authored placeholder triage sample loaded; no PDF extraction was performed.');});
+ form(importForm,async()=>{if(!sha) throw Error('Select the source document first');await api('/api/rules/import',{document_sha256:sha,node:JSON.parse($('triage-node-json').value)});notice('Triage imported as draft; two reviewers and fixtures are required.');await refreshNodes();});
 }

@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {existsSync} from 'node:fs';import {read,documents,root} from './support.js';
+test('all relative documentation links resolve',()=>{for(const file of documents())for(const m of read(file).matchAll(/\[[^\]]*\]\(([^)]+)\)/g)){const target=m[1].replace(/^<|>$/g,'').split('#')[0];if(!target||/^[a-z]+:|^\//i.test(target))continue;assert.ok(existsSync(new URL(target,new URL(file,root))),file+': '+target);}});

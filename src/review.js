@@ -6,7 +6,7 @@ import { triageFields } from './ir.js';
 import { exact,text,timestamp,ApiError } from './prototype/store.js';
 import { contentHash } from './draft.js';
 import { validateNodes } from './ir.js';
-export function getNode(store,id) {const r=store.db.prepare('SELECT * FROM nodes WHERE node_id=?').get(text(id,'node_id'));if(!r) throw new ApiError('Node not found',404);return {node:JSON.parse(r.node),content_hash:r.content_hash,approvals:approvalEvidence(JSON.parse(r.node),readReviewEvents(store,id)),document_sha256:r.document_sha256,block_id:r.block_id};}
+export function getNode(store,id) {const r=store.db.prepare('SELECT * FROM nodes WHERE node_id=?').get(text(id,'node_id'));if(!r) throw new ApiError('Node not found',404);return {node:JSON.parse(r.node),content_hash:r.content_hash,type_info:{fields:getType(JSON.parse(r.node).type).fields,renderer:getType(JSON.parse(r.node).type).renderer},approvals:approvalEvidence(JSON.parse(r.node),readReviewEvents(store,id)),document_sha256:r.document_sha256,block_id:r.block_id};}
 export function nodeErrors(node) {
  const {parse_errors,...clean}=node;
  return [...(parse_errors??[]),...validateNodes([clean])];
@@ -19,7 +19,7 @@ function save(store,current,node,approvals,kind,actor,now) {
 }
 export function editNode(store,id,body,{actor,now}) {
  const current=getNode(store,id),node=structuredClone(current.node);
- const allowed=node.type==='scored_triage'?triageFields:node.type==='table'?['bands','coverage','message_template','applies_to']:['when','severity','message','applies_to'];
+ const allowed=getType(node.type).fields.filter(k=>!['input','on_missing_input','on_no_band'].includes(k));
  exact(body,allowed,[]);if(!Object.keys(body).length) throw new ApiError('Provide editable fields');
  Object.assign(node,body);node.status='draft';node.reviewers=[];delete node.parse_errors;
  if(node.type==='table'&&body.bands&&!Object.hasOwn(body,'coverage')&&Array.isArray(node.bands)&&node.bands.length&&node.bands.every(b=>Number.isFinite(b?.min)&&Number.isFinite(b?.max))) node.coverage={min:Math.min(...node.bands.map(b=>b.min)),max:Math.max(...node.bands.map(b=>b.max))};

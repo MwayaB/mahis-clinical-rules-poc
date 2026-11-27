@@ -1,3 +1,5 @@
+**Placeholder notice: every clinical value, threshold, category, code, patient and reviewer identity is a placeholder, not clinical guidance.**
+
 # Pre-refactor inventory
 
 Every clinical value, code, patient and reviewer identity is a placeholder, not clinical guidance.

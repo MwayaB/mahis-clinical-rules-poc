@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "node --test",
-    "start": "node src/cli.js serve"
+    "start": "node src/cli.js serve",
+    "demo": "bash scripts/prototype-demo.sh"
   }
 }

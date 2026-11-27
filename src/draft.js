@@ -1,3 +1,5 @@
+import { getType } from './types/registry.js';
+import { dataQuality } from './inputs.js';
 import { validateNodes } from './ir.js';
 import { readFileSync } from 'node:fs';
 import { listBlocks } from './digitiser.js';
@@ -17,7 +19,7 @@ export function draftBlocks(blocks,{documentSha,atcByBlock}) {
   if(!isTable&&!isPregnancy) {unconverted.push({block_id:block.id,reason:'not converted: review manually'});continue;}
   const n=structuredClone(isTable?tableTemplate:predicateTemplate),errors=[];
   n.id=`${documentSha}-${block.id}`;n.status='draft';n.risk='high';n.placeholder=true;n.reviewers=[];n.applies_to={atc:atcByBlock[block.id]??''};
-  if(isPregnancy) n.applies_to.sex='F';
+  if(isPregnancy) n.applies_to.sex=dataQuality.pregnancy_sex;
   // Only explicit source annotations supply additional applicability. Never inherit template indications.
   const sourceAtc=/\bATC ([A-Z][A-Z0-9]+)\b/.exec(block.text)?.[1];
   const sourceIcd=/\bICD-10 (?:prefix )?([A-Z][0-9]{2}(?:\.[A-Z0-9]{1,4})?)\b/.exec(block.text)?.[1];
@@ -68,6 +70,6 @@ export function generateDrafts(store,sha,body,{actor,now}) {
 }
 export function listDrafts(store,sha) {
  requireMetadata(store,sha);const blocks=listBlocks(store,sha);
- const nodes=store.db.prepare('SELECT * FROM nodes WHERE document_sha256=? ORDER BY node_id').all(sha).map(r=>({node:JSON.parse(r.node),content_hash:r.content_hash,approvals:approvalEvidence(JSON.parse(r.node),readReviewEvents(store,r.node_id)),block:blocks.find(b=>b.id===r.block_id)}));
+ const nodes=store.db.prepare('SELECT * FROM nodes WHERE document_sha256=? ORDER BY node_id').all(sha).map(r=>({node:JSON.parse(r.node),content_hash:r.content_hash,type_info:{fields:getType(JSON.parse(r.node).type).fields,renderer:getType(JSON.parse(r.node).type).renderer},approvals:approvalEvidence(JSON.parse(r.node),readReviewEvents(store,r.node_id)),block:blocks.find(b=>b.id===r.block_id)}));
  return {nodes,unconverted:blocks.filter(b=>!nodes.some(n=>n.block.id===b.id)).map(b=>({block_id:b.id,reason:'not converted: review manually',block:b}))};
 }

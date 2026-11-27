@@ -1,3 +1,4 @@
+import { dataQuality,inputCatalog } from './inputs.js';
 import { getType } from './types/registry.js';
 import { fields,nonempty,object } from './schema.js';
 export { fields,nonempty,object } from './schema.js';
@@ -32,18 +33,18 @@ export function validateNodes(nodes, { compiled=false,terminology=defaultTermino
     if(!nonempty(s.text)) add('invalid source.text');
    }
   }
-  if(!n.applies_to) {errors.push(...definition.validate(n,{compiled,terminology}));return;}
+  if(!n.applies_to) {errors.push(...definition.validate(n,{compiled,terminology,pregnancySex:dataQuality.pregnancy_sex}));return;}
   if(fields(n.applies_to,['atc','sex','age_years','icd10'],['atc'],path+'.applies_to',errors)) {
    const a=n.applies_to;
    // Signed compiled rules retain their release terminology; do not reinterpret with the installed seed.
    if(a.icd10!==undefined&&(!nonempty(a.icd10)||! /^[A-Z][0-9]{2}(?:\.[A-Z0-9]{1,4})?$/.test(a.icd10)||terminology!==null&&!hasPrefix(terminology,a.icd10))) add('unknown ICD-10 prefix '+JSON.stringify(a.icd10));
    if(!nonempty(a.atc)) add('invalid ATC');
-   if(a.sex!==undefined&&!['F','M','U'].includes(a.sex)) add('invalid applicability sex');
+   if(a.sex!==undefined&&!inputCatalog.find(d=>d.name==='sex').domain.values.includes(a.sex)) add('invalid applicability sex');
    if(a.age_years!==undefined&&fields(a.age_years,['min','max'],['min','max'],path+'.applies_to.age_years',errors)) {
-    if(!Number.isFinite(a.age_years.min)||!Number.isFinite(a.age_years.max)||a.age_years.min<0||a.age_years.max>120||a.age_years.min>a.age_years.max) add('invalid applicability age_years');
+    if(!Number.isFinite(a.age_years.min)||!Number.isFinite(a.age_years.max)||a.age_years.min<0||a.age_years.max>dataQuality.limits.age_years.max||a.age_years.min>a.age_years.max) add('invalid applicability age_years');
    }
   }
-  errors.push(...definition.validate(n,{compiled,terminology}));
+  errors.push(...definition.validate(n,{compiled,terminology,pregnancySex:dataQuality.pregnancy_sex}));
  });
  return errors;
 }

@@ -2,9 +2,9 @@ import { fields,nonempty,object } from '../schema.js';
 const contextFields=['today','weight_kg','pregnant','proposed_atc','proposed_tablets'];
 export const tableFields=['applies_to','input','coverage','bands','on_missing_input','on_no_band','message_template'];
 export const predicateFields=['applies_to','when','severity','message'];
-function validate(n) {const errors=[],path=n.id,add=m=>errors.push(`${path}: ${m}`);
+function validate(n,ctx={}) {const errors=[],path=n.id,add=m=>errors.push(`${path}: ${m}`);
   if(n.type==='predicate') {
-   if(Object.hasOwn(n.when??{},'pregnant')&&n.applies_to?.sex!=='F') add('pregnancy condition requires applies_to.sex F');
+   if(Object.hasOwn(n.when??{},'pregnant')&&(ctx.pregnancySex!==undefined?n.applies_to?.sex!==ctx.pregnancySex:!n.applies_to?.sex)) add('pregnancy condition requires applies_to.sex '+(ctx.pregnancySex??'restriction'));
    if(!['block','warn','info'].includes(n.severity)) add('unknown severity');
    if(!nonempty(n.message)) add('message required');
    if(!object(n.when)||!Object.keys(n.when).length) add('nonempty flat when required');

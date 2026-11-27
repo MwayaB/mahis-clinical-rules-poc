@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {read,documents} from './support.js';
+test('documents showing values or codes explicitly identify all content as placeholders',()=>{for(const file of documents()){const s=read(file);if(/\d|ICD-?10|ATC/.test(s)){assert.match(s.slice(0,file==='README.md'?850:350),/placeholder/i,file);assert.match(s,/not clinical guidance/i,file);}}});

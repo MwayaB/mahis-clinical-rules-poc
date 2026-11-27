@@ -31,7 +31,7 @@ export async function releasedHTTP(s) {
  const sample=JSON.parse(readFileSync(new URL('../../samples/dose-guide/bundle.json',import.meta.url)));
  if(drafts.unconverted.some(x=>x.block_id===sample.triage_block_id)) {
   const triage=JSON.parse(readFileSync(new URL('../../ir/triage_example.ir.json',import.meta.url)));
-  await s.ok('/api/triage/drafts',{document_sha256:upload.sha256,block_id:sample.triage_block_id,node:triage.nodes[0]});
+  await s.ok('/api/rules/import',{document_sha256:upload.sha256,block_id:sample.triage_block_id,node:triage.nodes[0]});
   drafts=await s.ok('/api/ir?document='+upload.sha256);
  }
  for(const entry of drafts.nodes) {

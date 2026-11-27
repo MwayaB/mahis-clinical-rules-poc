@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {apiRoutes} from '../../src/server.js';import {read} from './support.js';
+test('API reference and operative router allowlist match in both directions',()=>{const doc=read('docs/api.md'),listed=[...doc.matchAll(/^\| (GET|POST) \| `([^`]+)`/gm)].map(m=>[m[1],m[2]]);assert.deepEqual(listed,apiRoutes);const wrapper=doc.split('\n').find(l=>l.includes('/prescriptions/check'));assert.match(wrapper,/DEPRECATED/);});

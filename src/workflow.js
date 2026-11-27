@@ -1,9 +1,10 @@
+import { recordAssessments,replayAssessment } from './assessment.js';
 import { defaultTerminology,isKnownCode,labelFor } from './terminology.js';
 import { checkPregnancy } from './plausibility.js';
 import { readFileSync } from 'node:fs';
 const pregnancyRules=JSON.parse(readFileSync(new URL('../ir/contraindication_example.ir.json',import.meta.url))).nodes;
 import { buildContext } from './context.js';
-import { evaluate } from './evaluator.js';
+import { adviceFromAssessments } from './evaluator.js';
 import { applyPackage } from './package.js';
 import { validDay } from './events.js';
 import { canonicalStringify,inputsHash } from './canonical.js';
@@ -29,9 +30,12 @@ export function prescribe(args) {
  const {db,today,patientId,packageDir,trustedPublicKeys,eventIds}=args;
  const pkg=applyPackage(packageDir,{trustedPublicKeys,engineVersion:'0.1.0'});
  return db.transaction(()=>{
+  // Record proposal inputs before assessing; the legacy receipt remains the final two events.
+  for(const [field,value] of [['proposed_atc',args.atc??null],['proposed_tablets',args.tablets??null]]) record({...args,eventId:args.eventIds.prescription+'-'+field},'observation-recorded',{field,value});
+  const ctx=buildContext(db.listForPatient(patientId),{today,terminologyVersion:pkg.manifest.terminology_version});
+  const assessed=recordAssessments({db,patientId,pkg,ctx,today,occurredAt:args.occurredAt,scope:'patient'});
+  const result={advice:adviceFromAssessments(pkg,ctx,assessed.results),package_version:pkg.manifest.package_version,engine_version:pkg.engine_version,contains_placeholders:pkg.manifest.contains_placeholders,inputs_hash:inputsHash(ctx)};
   const draft=record({...args,eventId:eventIds.prescription},'prescription-drafted',{atc:args.atc??null,tablets:args.tablets??null});
-  const ctx=buildContext(db.listForPatient(patientId,{upToSeq:draft.seq}),{today,terminologyVersion:pkg.manifest.terminology_version});
-  const result=evaluate(pkg,ctx);
   const shown=record({...args,eventId:eventIds.advice},'advice-shown',{
    rule_ids:result.advice.map(a=>a.rule_id),severities:result.advice.map(a=>a.severity),package_version:result.package_version,engine_version:result.engine_version,inputs_hash:result.inputs_hash,
    context_up_to_seq:draft.seq,rules_sha256:pkg.manifest.rules_sha256,manifest_sha256:inputsHash(pkg.manifest),today,advice:result.advice
@@ -39,14 +43,4 @@ export function prescribe(args) {
   return {result,draft,shown,exitCode:result.advice.some(a=>a.severity==='block')?2:0};
  });
 }
-export function replay({db,patientId,adviceEvent,loadedPackage}) {
- const e=adviceEvent,p=e.payload,pkg=loadedPackage;
- if(e.patient_id!==patientId||e.type!=='advice-shown') throw new Error('Wrong advice event');
- const stored=db.listForPatient(patientId,{upToSeq:e.seq}).find(x=>x.event_id===e.event_id);
- if(!stored||canonicalStringify(stored)!==canonicalStringify(e)||p.context_up_to_seq>=e.seq) throw new Error('Advice event or cutoff mismatch');
- if(p.package_version!==pkg.manifest.package_version||p.engine_version!==pkg.engine_version||p.rules_sha256!==pkg.manifest.rules_sha256||p.manifest_sha256!==inputsHash(pkg.manifest)) throw new Error('Exact recorded package required');
- const ctx=buildContext(db.listForPatient(patientId,{upToSeq:p.context_up_to_seq}),{today:p.today,terminologyVersion:pkg.manifest.terminology_version});
- const result=evaluate(pkg,ctx);
- if(result.inputs_hash!==p.inputs_hash||canonicalStringify(result.advice)!==canonicalStringify(p.advice)) throw new Error('Replay differs from recorded advice');
- return result;
-}
+export const replay=replayAssessment;
