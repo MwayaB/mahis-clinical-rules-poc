@@ -1,3 +1,4 @@
+import * as encounters from './encounters.js';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
@@ -38,7 +39,7 @@ export async function startServer({host='127.0.0.1',port=8080,dataDir=fileURLToP
    if(req.headers.host!==new URL(origin).host||req.headers.origin&&req.headers.origin!==origin||req.headers['sec-fetch-site']==='cross-site') throw new ApiError('Only same-origin loopback requests are accepted',403);
    const raw=req.url.split('?')[0];if(/%2f|%5c|\.\.|\\/i.test(raw)) throw new ApiError('Invalid path');
    const url=new URL(req.url,origin),path=url.pathname,method=req.method;
-   const queryKeys=path==='/api/guidelines'&&method==='POST'?['filename','document_id']:path==='/api/ir'?['document']:path==='/api/fixtures'?['node']:['/digitise.html','/review.html'].includes(path)?['document']:[];
+   const queryKeys=path==='/api/guidelines'&&method==='POST'?['filename','document_id']:path==='/api/triage/config'?['release_version']:path==='/api/ir'?['document']:path==='/api/fixtures'?['node']:['/digitise.html','/review.html'].includes(path)?['document']:[];
    for(const key of url.searchParams.keys()) if(!queryKeys.includes(key)||url.searchParams.getAll(key).length!==1) throw new ApiError('Unknown or duplicate query parameter '+key);
    const who=()=>req.headers['x-user']??'local-user';const meta=()=>({actor:who(),now:clock(),keyDir});
    let match;
@@ -61,6 +62,7 @@ export async function startServer({host='127.0.0.1',port=8080,dataDir=fileURLToP
     if(action==='blocks'&&method==='POST') return send(201,digitiser.manualBlock(store,sha,await jsonBody(req)));
     if(action==='draft'&&method==='POST') return send(200,drafts.generateDrafts(store,sha,await jsonBody(req),meta()));
    }
+   if(path==='/api/triage/drafts'&&method==='POST') return send(201,review.importTriageDraft(store,await jsonBody(req),meta()));
    if(path==='/api/ir'&&method==='GET') return send(200,drafts.listDrafts(store,url.searchParams.get('document')));
    if((match=/^\/api\/ir\/([^/]+)\/(edit|approve|reject|history)$/.exec(path))) {
     const id=decodeURIComponent(match[1]),action=match[2];
@@ -71,6 +73,13 @@ export async function startServer({host='127.0.0.1',port=8080,dataDir=fileURLToP
    if(path==='/api/fixtures'&&method==='POST') return send(200,fixtures.saveFixtures(store,await jsonBody(req)));
    if(path==='/api/releases'&&method==='GET') return send(200,releases.listReleases(store));
    if(path==='/api/releases'&&method==='POST') return send(201,releases.createRelease(store,await jsonBody(req),meta()));
+   if(path==='/api/triage/config'&&method==='GET') return send(200,encounters.triageConfiguration(store,url.searchParams.get('release_version'),{keyDir}));
+   if(path==='/api/encounters'&&method==='POST') return send(201,encounters.startEncounter(store,events,await jsonBody(req),meta()));
+   if((match=/^\/api\/encounters\/([^/]+)(?:\/(observations|triage|triage\/override))?$/.exec(path))) {
+    const id=decodeURIComponent(match[1]),action=match[2];
+    if(!action&&method==='GET') return send(200,encounters.readEncounter(store,events,id,meta()));
+    if(method==='POST') {const fn={observations:encounters.recordEncounterObservation,triage:encounters.scoreEncounter,'triage/override':encounters.overrideEncounter}[action];if(fn) return send(200,fn(store,events,id,await jsonBody(req),meta()));}
+   }
    if(path==='/api/patients'&&method==='GET') return send(200,emr.listPatients(store));
    if(path==='/api/patients'&&method==='POST') return send(201,emr.createPatient(store,events,await jsonBody(req),meta()));
    if((match=/^\/api\/patients\/([^/]+)\/(observations|status|diagnoses|prescriptions\/check|events|context)$/.exec(path))) {

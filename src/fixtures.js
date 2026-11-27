@@ -1,3 +1,4 @@
+import { triageEntry } from './plausibility.js';
 import { defaultTerminology,isKnownCode } from './terminology.js';
 import { exact,ApiError } from './prototype/store.js';
 import { getNode } from './review.js';
@@ -5,9 +6,14 @@ import { projectRules,fixtureGate } from './compiler.js';
 import { listDrafts } from './draft.js';
 import { validDay } from './events.js';
 const contextKeys=['today','weight_kg','pregnant','proposed_atc','proposed_tablets','sex','age_years','active_diagnoses'];
-function validateEntries(entries) {
+function validateEntries(entries,triageMode=false) {
  if(!Array.isArray(entries)||entries.length>1000) throw new ApiError('Fixtures must be an array with at most 1000 entries');
  for(const f of entries) {
+  if(triageMode) {
+   exact(f,['name','ctx','expect']);exact(f.ctx,['population','encounter_id',...triageEntry.fields.map(x=>x.input)],['population']);
+   if(typeof f.name!=='string'||!f.name.trim()||typeof f.ctx.population!=='string'||!Array.isArray(f.expect)||f.expect.some(e=>!e||typeof e.node_id!=='string')) throw new ApiError('Invalid triage fixture');
+   continue;
+  }
   exact(f,['name','ctx','expect']);if(typeof f.name!=='string'||!f.name.trim()||!Array.isArray(f.expect)||new Set(f.expect).size!==f.expect.length||f.expect.some(id=>typeof id!=='string')) throw new ApiError('Invalid fixture name or expectations');
   exact(f.ctx,contextKeys,['today','weight_kg','pregnant','proposed_atc','proposed_tablets']);
   if(f.ctx.active_diagnoses!==undefined&&(!Array.isArray(f.ctx.active_diagnoses)||f.ctx.active_diagnoses.some(d=>!d||!isKnownCode(defaultTerminology,d.icd10)||typeof d.terminology_version!=='string'||!d.terminology_version||!['confirmed','presumptive','suspected','ruled-out'].includes(d.certainty)))) throw new ApiError('Invalid fixture diagnoses');
@@ -15,9 +21,9 @@ function validateEntries(entries) {
  }
 }
 export function saveFixtures(store,body) {
- exact(body,['node_id','entries']);const r=getNode(store,body.node_id);validateEntries(body.entries);
+ exact(body,['node_id','entries']);const r=getNode(store,body.node_id);validateEntries(body.entries,r.node.type==='scored_triage');
  const doc=listDrafts(store,r.document_sha256);const ids=new Set(doc.nodes.map(x=>x.node.id));
- if(body.entries.some(f=>f.expect.some(id=>!ids.has(id)))) throw new ApiError('Fixture expects unknown rule ID');
+ if(body.entries.some(f=>f.expect.some(id=>!ids.has(typeof id==='string'?id:id.node_id)))) throw new ApiError('Fixture expects unknown rule ID');
  store.db.prepare('INSERT INTO fixtures VALUES(?,?,?) ON CONFLICT(node_id) DO UPDATE SET content_hash=excluded.content_hash,entries=excluded.entries').run(body.node_id,r.content_hash,store.encode(body.entries));
  return getFixtures(store,body.node_id);
 }
@@ -27,7 +33,7 @@ export function getFixtures(store,id) {
 }
 // Independent interval/equality oracle for generated boundary expectations, not clinical content generation.
 function expectedIds(nodes,ctx) {
- return nodes.filter(n=>n.applies_to.atc===ctx.proposed_atc).filter(n=>{
+ return nodes.filter(n=>n.type!=='scored_triage'&&n.applies_to.atc===ctx.proposed_atc).filter(n=>{
   const a=n.applies_to;
   if(a.sex&&ctx.sex!=null&&ctx.sex!==a.sex||a.age_years&&ctx.age_years!=null&&(ctx.age_years<a.age_years.min||ctx.age_years>a.age_years.max)) return false;
   if(a.icd10) {
@@ -59,7 +65,7 @@ export function releaseFixtures(store,sha) {
   if(f.stale||!f.entries.length) {errors.push(`${n.id}: missing or stale authored fixtures`);continue;}
   try {
    // Author coverage cannot be satisfied by generated boundaries or other nodes.
-   fixtureGate(projectRules({document:{id:'fixture'},nodes:[n]}),f.entries.map(x=>({...x,expect:x.expect.filter(id=>id===n.id)})));
+   fixtureGate(projectRules({document:{id:'fixture'},nodes:[n]}),f.entries.map(x=>({...x,expect:x.expect.filter(id=>(typeof id==='string'?id:id.node_id)===n.id)})));
   } catch(e) {errors.push(`${n.id}: ${e.message}`);}
   entries.push(...f.entries);
  }

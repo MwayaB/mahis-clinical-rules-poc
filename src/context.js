@@ -1,3 +1,4 @@
+import { triageEntry } from './plausibility.js';
 import { defaultTerminology } from './terminology.js';
 import { validDay } from './events.js';
 import { deepFreeze } from './package.js';
@@ -18,5 +19,15 @@ export function buildContext(events,{today,terminologyVersion=defaultTerminology
   if(e.type==='prescription-drafted') {set('proposed_atc',p.atc,e);set('proposed_tablets',p.tablets,e);}
  }
  ctx.terminology_changed=ctx.active_diagnoses.some(d=>d.terminology_version!==terminologyVersion);
+ return deepFreeze(ctx);
+}
+
+export function buildEncounterContext(events,encounterId,population) {
+ if(typeof encounterId!=='string'||!encounterId||typeof population!=='string'||!population) throw new Error('Encounter ID and population required');
+ const sorted=[...events].sort((a,b)=>a.seq-b.seq);
+ if(new Set(sorted.map(e=>e.patient_id)).size>1) throw new Error('Mixed patients');
+ const scoped=sorted.filter(e=>e.payload.encounter_id===encounterId),retired=new Set(scoped.map(e=>e.payload.supersedes).filter(Boolean));
+ const inputs=triageEntry.fields.map(f=>f.input),ctx={encounter_id:encounterId,population,...Object.fromEntries(inputs.map(k=>[k,null]))};
+ for(const e of scoped) if(e.type==='observation-recorded'&&!retired.has(e.event_id)&&inputs.includes(e.payload.field)) ctx[e.payload.field]=e.payload.value;
  return deepFreeze(ctx);
 }

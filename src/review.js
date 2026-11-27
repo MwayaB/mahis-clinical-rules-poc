@@ -1,3 +1,6 @@
+import { requireMetadata } from './registry.js';
+import { manualBlock } from './digitiser.js';
+import { triageFields } from './ir.js';
 import { exact,text,timestamp,ApiError } from './prototype/store.js';
 import { contentHash } from './draft.js';
 import { validateNodes } from './ir.js';
@@ -14,7 +17,7 @@ function save(store,current,node,approvals,kind,actor,now) {
 }
 export function editNode(store,id,body,{actor,now}) {
  const current=getNode(store,id),node=structuredClone(current.node);
- const allowed=node.type==='table'?['bands','coverage','message_template','applies_to']:['when','severity','message','applies_to'];
+ const allowed=node.type==='scored_triage'?triageFields:node.type==='table'?['bands','coverage','message_template','applies_to']:['when','severity','message','applies_to'];
  exact(body,allowed,[]);if(!Object.keys(body).length) throw new ApiError('Provide editable fields');
  Object.assign(node,body);node.status='draft';node.reviewers=[];delete node.parse_errors;
  if(node.type==='table'&&body.bands&&!Object.hasOwn(body,'coverage')&&Array.isArray(node.bands)&&node.bands.length&&node.bands.every(b=>Number.isFinite(b?.min)&&Number.isFinite(b?.max))) node.coverage={min:Math.min(...node.bands.map(b=>b.min)),max:Math.max(...node.bands.map(b=>b.max))};
@@ -36,3 +39,20 @@ export function rejectNode(store,id,body,{now}) {
   store.db.prepare('INSERT INTO review_events(node_id,kind,actor,occurred_at,before_hash,after_hash,snapshot) VALUES(?,?,?,?,?,?,?)').run(id,'rejection-reason',body.reviewer,now,current.content_hash,current.content_hash,store.encode({reason:body.reason}));return result;});
 }
 export function reviewHistory(store,id) {getNode(store,id);return store.db.prepare('SELECT * FROM review_events WHERE node_id=? ORDER BY seq').all(id).map(r=>({...r,snapshot:JSON.parse(r.snapshot)}));}
+
+export function importTriageDraft(store,body,{actor,now}) {
+ exact(body,['document_sha256','node']);requireMetadata(store,body.document_sha256);
+ const node=structuredClone(body.node);
+ if(node?.type!=='scored_triage') throw new ApiError('Only authored scored_triage nodes are accepted here',422);
+ node.status='draft';node.reviewers=[];
+ const errors=nodeErrors(node);if(errors.length) throw new ApiError(errors.join('; '),422);
+ const existing=store.db.prepare('SELECT document_sha256 FROM nodes WHERE node_id=?').get(node.id);
+ if(existing) {if(existing.document_sha256!==body.document_sha256) throw new ApiError('Node belongs to another source',409);return getNode(store,node.id);}
+ text(actor,'editor');timestamp(now);const hash=contentHash(node);
+ return store.transaction(()=>{
+  manualBlock(store,body.document_sha256,{id:node.id,page:node.source.page,kind:'paragraph',bbox:node.source.bbox,text:node.source.text});
+  store.db.prepare('INSERT INTO nodes VALUES(?,?,?,?,?,?)').run(node.id,body.document_sha256,node.id,store.encode(node),hash,'[]');
+  store.db.prepare('INSERT INTO review_events(node_id,kind,actor,occurred_at,before_hash,after_hash,snapshot) VALUES(?,?,?,?,?,?,?)').run(node.id,'draft-imported',actor,now,'',hash,store.encode(node));
+  return getNode(store,node.id);
+ });
+}

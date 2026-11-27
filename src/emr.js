@@ -1,3 +1,4 @@
+import { replayTriage } from './encounters.js';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { exact,text,ApiError,timestamp } from './prototype/store.js';
@@ -30,7 +31,7 @@ export function checkPrescription(store,db,id,body,{now,keyDir}) {
 export function replayAdvice(store,db,seq,{keyDir}) {
  if(!Number.isSafeInteger(seq)||seq<1) throw new ApiError('Invalid event seq');
  let found;for(const p of listPatients(store)) {found=db.listForPatient(p.patient_id,{upToSeq:seq}).find(e=>e.seq===seq);if(found) break;}
- if(!found||found.type!=='advice-shown') throw new ApiError('Advice event not found',404);
- const pkg=loadRelease(store,found.payload.package_version,{keyDir});const result=workflow.replay({db,patientId:found.patient_id,adviceEvent:found,loadedPackage:pkg});
+ if(!found||!['advice-shown','triage-recorded'].includes(found.type)) throw new ApiError('Advice event not found',404);
+ const pkg=loadRelease(store,found.payload.package_version,{keyDir});const result=(found.type==='triage-recorded'?replayTriage:workflow.replay)({db,patientId:found.patient_id,adviceEvent:found,loadedPackage:pkg});
  return {matches:true,event_seq:seq,result};
 }
