@@ -64,6 +64,9 @@ export function triageFixtureGate(rules,fixtures) {
  const keys=['node_id','status','score','category','missing','input','value','components','overrides_fired'];
  for(const f of fixtures) {
   if(!f||typeof f.name!=='string'||!f.ctx||!Array.isArray(f.expect)||Object.keys(f).some(k=>!['name','ctx','expect'].includes(k))||f.expect.some(e=>!e||!counts.has(e.node_id)||Object.keys(e).some(k=>!keys.includes(k)))) throw new Error('Invalid triage fixture '+f?.name);
+  for(const e of f.expect) {
+   if(!['scored','incomplete','invalid'].includes(e.status)||e.status==='scored'&&(!Number.isSafeInteger(e.score)||typeof e.category!=='string')||e.status==='incomplete'&&(!Array.isArray(e.missing)||!e.missing.length)||e.status==='invalid'&&(typeof e.input!=='string'||!Object.hasOwn(e,'value'))) throw new Error('Incomplete triage fixture expectation '+f.name);
+  }
   const result=triage(pkg,f.ctx),projected=result.map((r,i)=>Object.fromEntries(Object.keys(f.expect[i]??{}).map(k=>[k,r[k]])));
   if(result.length!==f.expect.length||canonicalStringify(projected)!==canonicalStringify(f.expect)) throw new Error('Triage fixture mismatch '+f.name);
   for(const r of result) {counts.get(r.node_id).add(r.status);if(r.status==='scored') counts.get(r.node_id).add('category:'+r.category);}
