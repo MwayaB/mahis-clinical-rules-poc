@@ -74,3 +74,14 @@ The generated chart PDF was rendered and visually inspected. Live browser verifi
 ## Not covered
 
 The real chart's parameters/thresholds, paediatric and adult clinical variants, Ministry colour/priority mapping, outcome validation, authenticated governance, production key custody/distribution, or automatic demographic-to-chart selection are outside this proof of concept. The reviewed IR and evaluator interfaces allow additional chart content, but no clinical equivalence or integration readiness is asserted.
+
+
+## Combined placeholder guideline follow-up
+
+The main placeholder now contains both the existing drug guidance and triage scoring in one two-page PDF. Page 1 retains the original drug tables and pregnancy statement unchanged; page 2 renders the single supplied triage sample's parameters, points, score categories and automatic override. No clinical values or scoring semantics changed. The compatibility path under samples/triage contains identical PDF bytes.
+
+The checksum-bound mock fixture has four blocks across both pages. Triage block b4 is attached to the authored IR using matched provenance (page, bbox and text), rather than duplicated as a manual block. Attachments receive source-scoped node IDs to preserve older versions. Unconverted blocks still prevent release; independent reviewer approvals and fixtures remain required for all four rules. The full demo now performs one upload and publishes one combined release, poc-demo-0.4.0, for prescribing and triage.
+
+The generator updates source data, both PDF paths, mock fixture, source checksums and fixture IDs together. The original triage renderer entry point delegates to the combined generator. Both PDF pages were rendered and visually checked, and pypdf extraction verified source text and checksums. The README and sample instructions describe the unified review flow. PDF files are marked binary in .gitattributes so Git does not treat PDF cross-reference padding as source whitespace errors.
+
+The verification follow-up adds the authored sample triage to Create drafts automatically for the exact combined-PDF checksum and matching source provenance. It appears beside the three existing rule cards with empty reviewers/approvals. Generic sources do not gain inferred triage rules. Repeat drafting preserves prior revisions and approvals. The sample bundle carries the explicit authored mapping; the generator keeps it aligned with the chart. The complete suite now passes **221 tests, zero skipped**, including the new four-rule verification and source-attachment regressions.

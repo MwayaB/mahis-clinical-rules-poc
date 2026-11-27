@@ -1,5 +1,5 @@
 import { requireMetadata } from './registry.js';
-import { manualBlock } from './digitiser.js';
+import { manualBlock,listBlocks } from './digitiser.js';
 import { triageFields } from './ir.js';
 import { exact,text,timestamp,ApiError } from './prototype/store.js';
 import { contentHash } from './draft.js';
@@ -41,17 +41,25 @@ export function rejectNode(store,id,body,{now}) {
 export function reviewHistory(store,id) {getNode(store,id);return store.db.prepare('SELECT * FROM review_events WHERE node_id=? ORDER BY seq').all(id).map(r=>({...r,snapshot:JSON.parse(r.snapshot)}));}
 
 export function importTriageDraft(store,body,{actor,now}) {
- exact(body,['document_sha256','node']);requireMetadata(store,body.document_sha256);
+ exact(body,['document_sha256','node','block_id'],['document_sha256','node']);requireMetadata(store,body.document_sha256);
  const node=structuredClone(body.node);
  if(node?.type!=='scored_triage') throw new ApiError('Only authored scored_triage nodes are accepted here',422);
  node.status='draft';node.reviewers=[];
  const errors=nodeErrors(node);if(errors.length) throw new ApiError(errors.join('; '),422);
+ const blocks=listBlocks(store,body.document_sha256);
+ const matches=blocks.filter(b=>b.page===node.source.page&&b.text===node.source.text&&JSON.stringify(b.bbox)===JSON.stringify(node.source.bbox));
+ if(body.block_id===undefined&&matches.length>1) throw new ApiError('Multiple matching source blocks; provide block_id',422);
+ const sourceBlock=body.block_id!==undefined?blocks.find(b=>b.id===body.block_id):matches[0];
+ if(body.block_id!==undefined&&!sourceBlock) throw new ApiError('Source block not found',422);
+ if(sourceBlock&&!matches.includes(sourceBlock)) throw new ApiError('Authored triage provenance must match the selected source block',422);
+ const block_id=sourceBlock?.id??node.id;
+ if(sourceBlock) node.id=`${body.document_sha256}-${block_id}`;
  const existing=store.db.prepare('SELECT document_sha256 FROM nodes WHERE node_id=?').get(node.id);
  if(existing) {if(existing.document_sha256!==body.document_sha256) throw new ApiError('Node belongs to another source',409);return getNode(store,node.id);}
  text(actor,'editor');timestamp(now);const hash=contentHash(node);
  return store.transaction(()=>{
-  manualBlock(store,body.document_sha256,{id:node.id,page:node.source.page,kind:'paragraph',bbox:node.source.bbox,text:node.source.text});
-  store.db.prepare('INSERT INTO nodes VALUES(?,?,?,?,?,?)').run(node.id,body.document_sha256,node.id,store.encode(node),hash,'[]');
+  if(!sourceBlock) manualBlock(store,body.document_sha256,{id:node.id,page:node.source.page,kind:'paragraph',bbox:node.source.bbox,text:node.source.text});
+  store.db.prepare('INSERT INTO nodes VALUES(?,?,?,?,?,?)').run(node.id,body.document_sha256,block_id,store.encode(node),hash,'[]');
   store.db.prepare('INSERT INTO review_events(node_id,kind,actor,occurred_at,before_hash,after_hash,snapshot) VALUES(?,?,?,?,?,?,?)').run(node.id,'draft-imported',actor,now,'',hash,store.encode(node));
   return getNode(store,node.id);
  });

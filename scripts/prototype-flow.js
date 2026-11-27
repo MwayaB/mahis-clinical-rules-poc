@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 const base=process.env.PROTOTYPE_BASE_URL??'http://127.0.0.1:8080';
 const triageIR=JSON.parse(readFileSync(new URL('../ir/triage_example.ir.json',import.meta.url)));
-const triageFixtures=JSON.parse(readFileSync(new URL('../fixtures/triage_example.fixtures.json',import.meta.url)));
 const triageDemo=JSON.parse(readFileSync(new URL('../samples/triage/demo.json',import.meta.url)));
 const sample=JSON.parse(readFileSync(new URL('../samples/dose-guide/bundle.json',import.meta.url)));
 function call(path,body,{file}={}) {
@@ -18,7 +17,9 @@ function call(path,body,{file}={}) {
 call('/api/guidelines?filename=placeholder.pdf&document_id='+sample.document_id,undefined,{file:fileURLToPath(new URL('../samples/dose-guide/placeholder.pdf',import.meta.url))});
 call(`/api/guidelines/${sample.document_sha256}/metadata`,{edition:sample.edition});
 assert.equal(call(`/api/guidelines/${sample.document_sha256}/digitise`,{}).digitiser,'mock-fixture');
-const draft=call(`/api/guidelines/${sample.document_sha256}/draft`,{atc_by_block:sample.atc_by_block});
+let draft=call(`/api/guidelines/${sample.document_sha256}/draft`,{atc_by_block:sample.atc_by_block});
+call('/api/triage/drafts',{document_sha256:sample.document_sha256,block_id:sample.triage_block_id,node:triageIR.nodes[0]});
+draft=call('/api/ir?document='+sample.document_sha256);
 for(const entry of draft.nodes) {
  for(const reviewer of ['placeholder-reviewer-a','placeholder-reviewer-b']) call(`/api/ir/${entry.node.id}/approve`,{reviewer});
  call('/api/fixtures',{node_id:entry.node.id,entries:sample.fixtures[entry.block.id]});
@@ -37,15 +38,9 @@ const adult=call('/api/patients',{name:'PLACEHOLDER adult pregnancy example',sex
 call(adultPath+'/diagnoses',sample.demo_diagnoses.adult);
 call(adultPath+'/status',{field:'pregnant',value:true,release_version:version});const blocked=call(adultPath+'/prescriptions/check',{atc:sample.atc_by_block.b2,tablets:1,release_version:version});assert.equal(blocked.result.advice[0].severity,'block');assert.equal(blocked.exitCode,2);
 // The supplied rule is adult-only. Keep triage on the separate adult, never the demo child.
-const triageUpload=call('/api/guidelines?filename=triage.pdf&document_id='+triageIR.document.id,undefined,{file:fileURLToPath(new URL('../samples/triage/placeholder.pdf',import.meta.url))});
-call(`/api/guidelines/${triageUpload.sha256}/metadata`,{edition:triageIR.document.edition});
-const triageDraft=call('/api/triage/drafts',{document_sha256:triageUpload.sha256,node:triageIR.nodes[0]});
-for(const reviewer of ['reviewer-a','reviewer-b']) call(`/api/ir/${triageDraft.node.id}/approve`,{reviewer});
-call('/api/fixtures',{node_id:triageDraft.node.id,entries:triageFixtures});
-if(!call('/api/releases').some(r=>r.version===triageDemo.release_version)) call('/api/releases',{document_sha256:triageUpload.sha256,version:triageDemo.release_version});
 const encounter=call('/api/encounters',{patient_id:adult.patient_id,population:triageIR.nodes[0].scope.population}),encounterPath='/api/encounters/'+encounter.encounter_id;
 for(const observation of triageDemo.observations.slice(0,-1)) call(encounterPath+'/observations',observation);
-const triageRequest={release_version:triageDemo.release_version};
+const triageRequest={release_version:version};
 const incomplete=call(encounterPath+'/triage',triageRequest);assert.equal(incomplete.results[0].status,'incomplete');assert.deepEqual(incomplete.results[0].missing,[triageDemo.observations.at(-1).field]);assert.equal(incomplete.results[0].category,undefined);console.log('Adult triage: incomplete');
 call(encounterPath+'/observations',triageDemo.observations.at(-1));
 const scored=call(encounterPath+'/triage',triageRequest);assert.equal(scored.results[0].status,'scored');assert.equal(scored.results[0].category,triageIR.nodes[0].categories_order[0]);console.log('Adult triage: scored');

@@ -27,13 +27,20 @@ export async function releasedHTTP(s) {
  const upload=await s.ok('/api/guidelines?filename=placeholder.pdf&document_id=PLACEHOLDER-GUIDE',s.bytes);
  await s.ok(`/api/guidelines/${upload.sha256}/metadata`,{edition:'placeholder-2026'});
  const digitisation=await s.ok(`/api/guidelines/${upload.sha256}/digitise`,{});
- const drafts=await s.ok(`/api/guidelines/${upload.sha256}/draft`,{atc_by_block:{b1:'P01BF01',b2:'J01XX01'}});
+ let drafts=await s.ok(`/api/guidelines/${upload.sha256}/draft`,{atc_by_block:{b1:'P01BF01',b2:'J01XX01'}});
+ const sample=JSON.parse(readFileSync(new URL('../../samples/dose-guide/bundle.json',import.meta.url)));
+ if(drafts.unconverted.some(x=>x.block_id===sample.triage_block_id)) {
+  const triage=JSON.parse(readFileSync(new URL('../../ir/triage_example.ir.json',import.meta.url)));
+  await s.ok('/api/triage/drafts',{document_sha256:upload.sha256,block_id:sample.triage_block_id,node:triage.nodes[0]});
+  drafts=await s.ok('/api/ir?document='+upload.sha256);
+ }
  for(const entry of drafts.nodes) {
   const n=entry.node;
   // Generic HTTP test fixture text has no indication; add explicit synthetic scope for these tests only.
-  if(!n.applies_to.icd10&&n.type==='table') entry.node=(await s.ok(`/api/ir/${n.id}/edit`,{applies_to:{...n.applies_to,icd10:'B50'}})).node;
+  if(n.type==='table'&&!n.applies_to.icd10) entry.node=(await s.ok(`/api/ir/${n.id}/edit`,{applies_to:{...n.applies_to,icd10:'B50'}})).node;
   if(n.type==='predicate'&&!n.applies_to.age_years) entry.node=(await s.ok(`/api/ir/${n.id}/edit`,{applies_to:{...n.applies_to,sex:'F',age_years:{min:12,max:50}}})).node;
   await s.ok(`/api/ir/${n.id}/approve`,{reviewer:'placeholder-reviewer-a'});await s.ok(`/api/ir/${n.id}/approve`,{reviewer:'placeholder-reviewer-b'});
+  if(n.type==='scored_triage') {await s.ok('/api/fixtures',{node_id:n.id,entries:sample.fixtures[entry.block.id]});continue;}
   const scoped=entry.node,term=(await import('../../src/terminology.js')).defaultTerminology,code=term.codes.find(c=>c.code.startsWith(scoped.applies_to.icd10??''))?.code;
   const correct=n.type==='table'?n.bands.find(b=>b.min<=12&&b.max>12).value:1;
   const ctx={active_diagnoses:[{icd10:code,certainty:'confirmed',terminology_version:term.terminology_version}],sex:'F',age_years:30,today:'2026-01-01',weight_kg:12,pregnant:n.type==='predicate',proposed_atc:n.applies_to.atc,proposed_tablets:n.type==='table'?correct+1:2};

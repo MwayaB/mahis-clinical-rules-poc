@@ -1,5 +1,5 @@
 {
-  "document_sha256": "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497",
+  "document_sha256": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7",
   "document_id": "PLACEHOLDER-DOSE-GUIDE",
   "edition": "placeholder-2026",
   "atc_by_block": {
@@ -26,7 +26,7 @@
           ]
         },
         "expect": [
-          "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497-b1"
+          "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b1"
         ]
       },
       {
@@ -61,7 +61,7 @@
           "age_years": 30
         },
         "expect": [
-          "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497-b2"
+          "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b2"
         ]
       },
       {
@@ -96,7 +96,7 @@
           ]
         },
         "expect": [
-          "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497-b3"
+          "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b3"
         ]
       },
       {
@@ -117,9 +117,285 @@
         },
         "expect": []
       }
+    ],
+    "b4": [
+      {
+        "name": "normal",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 12,
+          "avpu": "alert"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 0,
+            "category": "standard"
+          }
+        ]
+      },
+      {
+        "name": "score2",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 12,
+          "avpu": "pain"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 2,
+            "category": "standard"
+          }
+        ]
+      },
+      {
+        "name": "score3",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 0,
+          "avpu": "alert"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 3,
+            "category": "urgent"
+          }
+        ]
+      },
+      {
+        "name": "score4",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 0,
+          "avpu": "voice"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 4,
+            "category": "urgent"
+          }
+        ]
+      },
+      {
+        "name": "score5",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 0,
+          "avpu": "pain"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 5,
+            "category": "emergency"
+          }
+        ]
+      },
+      {
+        "name": "score6",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 0,
+          "avpu": "unresponsive"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 6,
+            "category": "emergency"
+          }
+        ]
+      },
+      {
+        "name": "override-low-score",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 12,
+          "avpu": "unresponsive"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 3,
+            "category": "emergency"
+          }
+        ]
+      },
+      {
+        "name": "boundary-before9",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 8.99,
+          "avpu": "alert"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 3,
+            "category": "urgent"
+          }
+        ]
+      },
+      {
+        "name": "boundary9",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 9,
+          "avpu": "alert"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 0,
+            "category": "standard"
+          }
+        ]
+      },
+      {
+        "name": "boundary-before21",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 20.99,
+          "avpu": "alert"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 0,
+            "category": "standard"
+          }
+        ]
+      },
+      {
+        "name": "boundary21",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 21,
+          "avpu": "alert"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 2,
+            "category": "standard"
+          }
+        ]
+      },
+      {
+        "name": "boundary-before100",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 99.99,
+          "avpu": "alert"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "scored",
+            "score": 2,
+            "category": "standard"
+          }
+        ]
+      },
+      {
+        "name": "missing-resp-despite-override",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": null,
+          "avpu": "unresponsive"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "incomplete",
+            "missing": [
+              "resp_rate_per_min"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "missing-avpu",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 12,
+          "avpu": null
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "incomplete",
+            "missing": [
+              "avpu"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "bad-ordinal",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 12,
+          "avpu": "unknown"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "invalid",
+            "input": "avpu",
+            "value": "unknown"
+          }
+        ]
+      },
+      {
+        "name": "boundary100",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": 100,
+          "avpu": "alert"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "invalid",
+            "input": "resp_rate_per_min",
+            "value": 100
+          }
+        ]
+      },
+      {
+        "name": "below-coverage",
+        "ctx": {
+          "population": "adult",
+          "resp_rate_per_min": -0.01,
+          "avpu": "alert"
+        },
+        "expect": [
+          {
+            "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+            "status": "invalid",
+            "input": "resp_rate_per_min",
+            "value": -0.01
+          }
+        ]
+      }
     ]
   },
-  "source_note": "All applicability and placeholder doses are stated explicitly in the PDF and exact mock digitised text.",
+  "source_note": "Drug dosing, pregnancy applicability and adult triage scoring are all stated explicitly in the combined PDF and matching mock blocks.",
   "demo_diagnoses": {
     "child": {
       "icd10": "B50.9",
@@ -137,5 +413,126 @@
       "certainty": "confirmed"
     }
   },
-  "release_version": "poc-demo-0.2.0"
+  "release_version": "poc-demo-0.4.0",
+  "triage_block_id": "b4",
+  "authored_rules_by_block": {
+    "b4": {
+      "id": "triage-adult-vitals",
+      "type": "scored_triage",
+      "risk": "high",
+      "scope": {
+        "population": "adult"
+      },
+      "parameters": [
+        {
+          "name": "resp_rate",
+          "input": "resp_rate_per_min",
+          "kind": "numeric",
+          "bands": [
+            {
+              "min": 0,
+              "max": 9,
+              "min_inclusive": true,
+              "max_inclusive": false,
+              "points": 3
+            },
+            {
+              "min": 9,
+              "max": 21,
+              "min_inclusive": true,
+              "max_inclusive": false,
+              "points": 0
+            },
+            {
+              "min": 21,
+              "max": 100,
+              "min_inclusive": true,
+              "max_inclusive": false,
+              "points": 2
+            }
+          ],
+          "coverage": {
+            "min": 0,
+            "max": 100
+          }
+        },
+        {
+          "name": "consciousness",
+          "input": "avpu",
+          "kind": "ordinal",
+          "levels": [
+            {
+              "value": "alert",
+              "points": 0
+            },
+            {
+              "value": "voice",
+              "points": 1
+            },
+            {
+              "value": "pain",
+              "points": 2
+            },
+            {
+              "value": "unresponsive",
+              "points": 3
+            }
+          ]
+        }
+      ],
+      "score_bands": [
+        {
+          "min": 0,
+          "max": 2,
+          "min_inclusive": true,
+          "max_inclusive": true,
+          "category": "standard"
+        },
+        {
+          "min": 3,
+          "max": 4,
+          "min_inclusive": true,
+          "max_inclusive": true,
+          "category": "urgent"
+        },
+        {
+          "min": 5,
+          "max": 99,
+          "min_inclusive": true,
+          "max_inclusive": true,
+          "category": "emergency"
+        }
+      ],
+      "overrides": [
+        {
+          "id": "unresponsive-override",
+          "when": {
+            "avpu": "unresponsive"
+          },
+          "category": "emergency"
+        }
+      ],
+      "categories_order": [
+        "standard",
+        "urgent",
+        "emergency"
+      ],
+      "source": {
+        "page": 2,
+        "bbox": [
+          40,
+          120,
+          572,
+          720
+        ],
+        "text": "Adult triage scoring.\nResp Rate\nresp_rate_per_min [0, 9): 3 points\nresp_rate_per_min [9, 21): 0 points\nresp_rate_per_min [21, 100): 2 points\nConsciousness\nalert: 0 points\nvoice: 1 points\npain: 2 points\nunresponsive: 3 points\nTotal score and category\n0 to 2 inclusive: standard\n3 to 4 inclusive: urgent\n5 to 99 inclusive: emergency\nPriority override\nIf avpu = unresponsive: emergency\nUse the higher category. Assess clinical urgency independently."
+      },
+      "status": "approved",
+      "placeholder": true,
+      "reviewers": [
+        "reviewer-a",
+        "reviewer-b"
+      ]
+    }
+  }
 }

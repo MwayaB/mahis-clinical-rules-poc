@@ -1,12 +1,27 @@
 {
   "placeholder": true,
   "observations": [
-    {"field": "resp_rate_per_min", "value": 12},
-    {"field": "pulse_per_min", "value": 80},
-    {"field": "temp_c", "value": 36.5},
-    {"field": "spo2_pct", "value": 98},
-    {"field": "avpu", "value": "alert"}
+    {
+      "field": "resp_rate_per_min",
+      "value": 12
+    },
+    {
+      "field": "pulse_per_min",
+      "value": 80
+    },
+    {
+      "field": "temp_c",
+      "value": 36.5
+    },
+    {
+      "field": "spo2_pct",
+      "value": 98
+    },
+    {
+      "field": "avpu",
+      "value": "alert"
+    }
   ],
   "override_reason": "Placeholder clinical assessment indicates greater urgency",
-  "release_version": "poc-demo-0.3.0"
+  "release_version": "poc-demo-0.4.0"
 }

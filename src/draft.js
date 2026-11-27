@@ -1,3 +1,4 @@
+import { validateNodes } from './ir.js';
 import { readFileSync } from 'node:fs';
 import { listBlocks } from './digitiser.js';
 import { requireMetadata } from './registry.js';
@@ -48,6 +49,16 @@ export function generateDrafts(store,sha,body,{actor,now}) {
  const blocks=listBlocks(store,sha);
  for(const [id,atc] of Object.entries(body.atc_by_block)) {if(!blocks.some(b=>b.id===id)) throw new ApiError('Unknown block '+id);text(atc,'ATC');}
  const result=draftBlocks(blocks,{documentSha:sha,atcByBlock:body.atc_by_block});
+ // The shipped mock has explicit authored IR, not inferred scoring from arbitrary text.
+ const sample=JSON.parse(readFileSync(new URL('../samples/dose-guide/bundle.json',import.meta.url)));
+ if(sample.document_sha256===sha) for(const block of blocks) {
+  const authored=sample.authored_rules_by_block?.[block.id];if(!authored) continue;
+  if(authored.type!=='scored_triage'||authored.placeholder!==true||validateNodes([authored]).length) throw new ApiError('Invalid authored sample rule for '+block.id,422);
+  if(authored.source.page!==block.page||JSON.stringify(authored.source.bbox)!==JSON.stringify(block.bbox)||authored.source.text!==block.text) throw new ApiError('Authored sample source does not match '+block.id,422);
+  const node={...structuredClone(authored),id:`${sha}-${block.id}`,status:'draft',reviewers:[]};
+  result.nodes.push({block_id:block.id,node});
+ }
+
  store.transaction(()=>{for(const {block_id,node} of result.nodes) {
   if(store.db.prepare('SELECT 1 FROM nodes WHERE node_id=?').get(node.id)) continue;
   const hash=contentHash(node);store.db.prepare('INSERT INTO nodes VALUES(?,?,?,?,?,?)').run(node.id,sha,block_id,store.encode(node),hash,'[]');

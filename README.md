@@ -34,12 +34,12 @@ npm test
 bash scripts/prototype-demo.sh
 ```
 
-The script starts the server, uploads the shipped sample, sets metadata, loads the mock blocks, drafts, approves with two distinct reviewer IDs, saves authored fixtures, releases `poc-demo-0.2.0`, records coded diagnoses and prescriptions, asserts warning/no-advice/block outcomes, verifies replay and prints each API result. All network steps use curl. It opens the EMR page when an OS browser opener exists, prints both URLs and leaves the server running:
+The script starts the server, uploads the shipped sample, sets metadata, loads the mock blocks, drafts, approves with two distinct reviewer IDs, saves authored fixtures, releases `poc-demo-0.4.0`, records coded diagnoses and prescriptions, asserts warning/no-advice/block outcomes, verifies replay and prints each API result. All network steps use curl. It opens the EMR page when an OS browser opener exists, prints both URLs and leaves the server running:
 
 - Upload/library: [http://127.0.0.1:8080/guidelines.html](http://127.0.0.1:8080/guidelines.html)
 - EMR: [http://127.0.0.1:8080/emr.html](http://127.0.0.1:8080/emr.html)
 
-The printed PID and `data/prototype-demo/server.pid` identify the process to stop. The demo refuses an occupied port; stop that service before rerunning. Rerunning on the same data retains a matching existing append-only release and adds new placeholder patients. The refreshed PDF uses release `poc-demo-0.2.0`; old source identities and releases remain immutable. Use `PROTOTYPE_DATA_DIR=/absolute/path` for an isolated data directory, and `PROTOTYPE_NO_OPEN=1` to suppress OS browser opening.
+The printed PID and `data/prototype-demo/server.pid` identify the process to stop. The demo refuses an occupied port; stop that service before rerunning. Rerunning on the same data retains a matching existing append-only release and adds new placeholder patients. The combined PDF uses release `poc-demo-0.4.0`; old source identities and releases remain immutable. Use `PROTOTYPE_DATA_DIR=/absolute/path` for an isolated data directory, and `PROTOTYPE_NO_OPEN=1` to suppress OS browser opening.
 
 For an empty workspace without a seeded release:
 
@@ -233,7 +233,7 @@ Legacy diagnosis events without version metadata remain unchanged and produce te
 
 ## Placeholder source consistency
 
-The one-page `samples/dose-guide/placeholder.pdf` contains guideline material only: malaria indication and existing three weight bands, pregnancy restriction for women aged 12–50, and a separate pneumonia dose table. Its ATC and ICD-10 identifiers are written in the guideline itself. No patient scenarios, software workflow instructions or data-quality implementation notes are included in the PDF.
+The two-page `samples/dose-guide/placeholder.pdf` contains guideline material only. Page 1 has the existing malaria and pneumonia dose tables plus the pregnancy restriction. Page 2 has the adult triage inputs, point bands, categories and priority override. Its ATC and ICD-10 identifiers are written in the guideline itself. No patient scenarios, software workflow instructions or data-quality implementation notes are included in the PDF.
 
 `samples/dose-guide/source.json` is the authoring data. `scripts/generate-sample-pdf.py` regenerates the PDF, content hash, exact digitisation fixture and sample fixture IDs using ReportLab (authoring-time Python tooling only; no npm dependencies). Drafting parses explicit text annotations and preserves their source text. Generic tables without an indication do not acquire one from a template. Clinicians never select individual rules in the EMR; approved rules apply automatically from the patient facts and proposed drug. Sample IRs under `ir/` remain independently authored placeholder test inputs.
 
@@ -254,17 +254,19 @@ Entry guards are separate data-quality limits: respiratory rate 0–100/min, pul
 
 ### Run the triage demo
 
-Run `bash scripts/prototype-demo.sh` with Node 22+. After the dose and pregnancy checks, it imports the authored sample against its placeholder chart PDF, obtains two reviewer approvals, saves triage fixtures and creates a separate signed triage release. It uses the **adult** patient because the supplied sample scope is adult-only. Four vitals are recorded first; missing AVPU produces an incomplete result. Recording AVPU produces the scored category, followed by a reasoned clinician override and replay. The child is never scored using the adult rule.
+Run `bash scripts/prototype-demo.sh` with Node 22+. It uploads the combined placeholder guideline once. Create drafts includes the drug rules from page 1 and the explicitly authored sample triage rule attached to its matching page-2 source block. All four appear together for verification. The triage mapping is restricted to this checksum-matched placeholder; no scoring rules are inferred from arbitrary PDFs. All four rules require two reviewer approvals and saved fixtures, then compile into one signed release used for both prescribing and triage. It uses the **adult** patient because the supplied sample scope is adult-only. Four vitals are recorded first; missing AVPU produces an incomplete result. Recording AVPU produces the scored category, followed by a reasoned clinician override and replay. The child is never scored using the adult rule.
 
 In the EMR, select a signed triage release, select the appropriate rule population and choose **Start encounter**. Save available vitals, then **Score triage**. Missing fields display `not recorded`; blanks do not become zero. The patient header shows the API's current category. The result includes a component table, and the event history shows original results and clinician overrides together.
 
-The chart is `samples/triage/placeholder.pdf`; it contains guideline-style chart content only. Its values are rendered from the one IR sample by `scripts/generate-triage-pdf.py`. For manual authoring, upload that source PDF and set metadata, open Review, and use **Import authored triage rule**. Imports are drafts, not approvals. The structured JSON editor, two independent reviewers, authored fixtures and release checks all remain in force; there is no automatic extraction from the PDF.
+The chart is on page 2 of `samples/dose-guide/placeholder.pdf`, alongside the existing drug guidance on page 1. `samples/triage/placeholder.pdf` is an identical compatibility copy, not a separate chart-only source. `scripts/generate-sample-pdf.py` renders both pages; `scripts/generate-triage-pdf.py` delegates to it. For the shipped placeholder, upload the combined PDF, set metadata, run mock digitisation, then choose **Create drafts**. The verification page includes the three drug/pregnancy rules and one **Scored triage** rule without a separate import step. **Import authored triage rule** remains available for manually authored rules from other sources. Imports are drafts, not approvals. The structured JSON editor, two independent reviewers, authored fixtures and release checks all remain in force; there is no automatic extraction from the PDF.
+
+The triage import reuses a matching digitised source block (or an explicitly selected `block_id`) and verifies page, bbox and source text. It does not duplicate the block. Attached rule IDs include the document checksum so a new source version does not overwrite an older reviewed chart. Unconverted blocks still prevent release. The shipped mock has a checksum- and provenance-matched authored triage mapping; other sources require explicit authoring/import and review.
 
 ### Triage API
 
 | Route | Purpose |
 | --- | --- |
-| `POST /api/triage/drafts` | Import `{document_sha256,node}` as a reviewed draft workflow |
+| `POST /api/triage/drafts` | Import `{document_sha256,node,block_id?}` as a reviewed draft workflow |
 | `GET /api/triage/sample` | Authored placeholder sample and test fixtures |
 | `GET /api/triage/config?release_version=...` | Entry field definitions and rule populations/categories from a verified release |
 | `POST /api/encounters` | Open `{patient_id,population}` and return `encounter_id` |

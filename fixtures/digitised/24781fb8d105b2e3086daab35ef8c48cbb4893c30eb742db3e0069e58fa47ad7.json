@@ -1,6 +1,6 @@
 {
   "digitiser": "mock-fixture",
-  "document_sha256": "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497",
+  "document_sha256": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7",
   "pages": [
     {
       "page": 1,
@@ -65,6 +65,22 @@
               "2"
             ]
           ]
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "blocks": [
+        {
+          "id": "b4",
+          "kind": "paragraph",
+          "bbox": [
+            40,
+            120,
+            572,
+            720
+          ],
+          "text": "Adult triage scoring.\nResp Rate\nresp_rate_per_min [0, 9): 3 points\nresp_rate_per_min [9, 21): 0 points\nresp_rate_per_min [21, 100): 2 points\nConsciousness\nalert: 0 points\nvoice: 1 points\npain: 2 points\nunresponsive: 3 points\nTotal score and category\n0 to 2 inclusive: standard\n3 to 4 inclusive: urgent\n5 to 99 inclusive: emergency\nPriority override\nIf avpu = unresponsive: emergency\nUse the higher category. Assess clinical urgency independently."
         }
       ]
     }

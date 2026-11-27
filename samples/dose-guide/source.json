@@ -66,6 +66,18 @@
           "2"
         ]
       ]
+    },
+    {
+      "page": 2,
+      "id": "b4",
+      "kind": "paragraph",
+      "bbox": [
+        40,
+        120,
+        572,
+        720
+      ],
+      "text": "Adult triage scoring.\nResp Rate\nresp_rate_per_min [0, 9): 3 points\nresp_rate_per_min [9, 21): 0 points\nresp_rate_per_min [21, 100): 2 points\nConsciousness\nalert: 0 points\nvoice: 1 points\npain: 2 points\nunresponsive: 3 points\nTotal score and category\n0 to 2 inclusive: standard\n3 to 4 inclusive: urgent\n5 to 99 inclusive: emergency\nPriority override\nIf avpu = unresponsive: emergency\nUse the higher category. Assess clinical urgency independently."
     }
   ]
 }

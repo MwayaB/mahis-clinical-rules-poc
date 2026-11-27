@@ -17,7 +17,7 @@
         ]
       },
       "expect": [
-        "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497-b1"
+        "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b1"
       ]
     },
     {
@@ -52,7 +52,7 @@
         "age_years": 30
       },
       "expect": [
-        "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497-b2"
+        "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b2"
       ]
     },
     {
@@ -87,7 +87,7 @@
         ]
       },
       "expect": [
-        "2ce9a9487071a28139cb62e4edfd178e3294c89a3ac75ca88bba891db3839497-b3"
+        "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b3"
       ]
     },
     {
@@ -107,6 +107,282 @@
         ]
       },
       "expect": []
+    }
+  ],
+  "b4": [
+    {
+      "name": "normal",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 12,
+        "avpu": "alert"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 0,
+          "category": "standard"
+        }
+      ]
+    },
+    {
+      "name": "score2",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 12,
+        "avpu": "pain"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 2,
+          "category": "standard"
+        }
+      ]
+    },
+    {
+      "name": "score3",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 0,
+        "avpu": "alert"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 3,
+          "category": "urgent"
+        }
+      ]
+    },
+    {
+      "name": "score4",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 0,
+        "avpu": "voice"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 4,
+          "category": "urgent"
+        }
+      ]
+    },
+    {
+      "name": "score5",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 0,
+        "avpu": "pain"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 5,
+          "category": "emergency"
+        }
+      ]
+    },
+    {
+      "name": "score6",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 0,
+        "avpu": "unresponsive"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 6,
+          "category": "emergency"
+        }
+      ]
+    },
+    {
+      "name": "override-low-score",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 12,
+        "avpu": "unresponsive"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 3,
+          "category": "emergency"
+        }
+      ]
+    },
+    {
+      "name": "boundary-before9",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 8.99,
+        "avpu": "alert"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 3,
+          "category": "urgent"
+        }
+      ]
+    },
+    {
+      "name": "boundary9",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 9,
+        "avpu": "alert"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 0,
+          "category": "standard"
+        }
+      ]
+    },
+    {
+      "name": "boundary-before21",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 20.99,
+        "avpu": "alert"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 0,
+          "category": "standard"
+        }
+      ]
+    },
+    {
+      "name": "boundary21",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 21,
+        "avpu": "alert"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 2,
+          "category": "standard"
+        }
+      ]
+    },
+    {
+      "name": "boundary-before100",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 99.99,
+        "avpu": "alert"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "scored",
+          "score": 2,
+          "category": "standard"
+        }
+      ]
+    },
+    {
+      "name": "missing-resp-despite-override",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": null,
+        "avpu": "unresponsive"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "incomplete",
+          "missing": [
+            "resp_rate_per_min"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "missing-avpu",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 12,
+        "avpu": null
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "incomplete",
+          "missing": [
+            "avpu"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bad-ordinal",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 12,
+        "avpu": "unknown"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "invalid",
+          "input": "avpu",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "name": "boundary100",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": 100,
+        "avpu": "alert"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "invalid",
+          "input": "resp_rate_per_min",
+          "value": 100
+        }
+      ]
+    },
+    {
+      "name": "below-coverage",
+      "ctx": {
+        "population": "adult",
+        "resp_rate_per_min": -0.01,
+        "avpu": "alert"
+      },
+      "expect": [
+        {
+          "node_id": "24781fb8d105b2e3086daab35ef8c48cbb4893c30eb742db3e0069e58fa47ad7-b4",
+          "status": "invalid",
+          "input": "resp_rate_per_min",
+          "value": -0.01
+        }
+      ]
     }
   ]
 }
