@@ -22,4 +22,6 @@ Compiled packages contain canonical `rules.json`, signed `manifest.json` and `ma
 
 ## Review screen
 
-Every card shows its approval count, required count and reviewer identities for the current content hash, with approve/reject controls. Fixture sections open by default for every type. Dosing retains structured fixture editing; other types use JSON. Loading sample fixtures does not save them: inspect and explicitly save for the current revision. An edit invalidates earlier approvals and fixture attachment.
+Every card shows its approval count, required count and reviewer identities for the current content hash, with approve/reject controls. Clinicians verify the source interpretation and explore patient examples in the EMR; they do not author evaluator tests.
+
+Automated checks run in the background and appear as passed/needs attention, with read-only technical details collapsed. The unchanged shipped placeholder drafts receive pre-authored sample checks automatically. Edits leave checks stale; missing, stale or failing checks still block release and require the rule author or technical team to resolve through the engineering fixture API. Expectations are never generated from evaluator output or silently refreshed after edits. The release gate runs checks independently of the UI.

@@ -3,13 +3,11 @@ import { inputCatalog } from './inputs.js';
 import { canonicalStringify } from './canonical.js';
 import { readFileSync } from 'node:fs';
 const fixtureDefaults=JSON.parse(readFileSync(new URL('../samples/fixture-defaults.json',import.meta.url)));
-import { triageEntry } from './plausibility.js';
 import { defaultTerminology,isKnownCode } from './terminology.js';
 import { exact,ApiError } from './prototype/store.js';
 import { getNode } from './review.js';
 import { projectRules,fixtureGate } from './compiler.js';
 import { listDrafts } from './draft.js';
-import { validDay } from './events.js';
 function validateEntries(entries,node) {
  if(!Array.isArray(entries)||entries.length>1000) throw new ApiError('Fixtures must be an array with at most 1000 entries');
  const allowed=[...new Set([...inputCatalog.map(d=>d.name),...getType(node.type).requiredInputs(node).map(d=>d.name),'population','encounter_id','active_diagnoses','terminology_version','terminology_changed'])];
@@ -30,6 +28,32 @@ export function saveFixtures(store,body) {
 export function getFixtures(store,id) {
  const node=getNode(store,id),row=store.db.prepare('SELECT * FROM fixtures WHERE node_id=?').get(id);
  return {node_id:id,content_hash:row?.content_hash??null,stale:!!row&&row.content_hash!==node.content_hash,entries:row?JSON.parse(row.entries):[],generated:generateBoundaries([node.node])};
+}
+// Only the unchanged checksum-matched sample can receive its pre-authored checks automatically.
+// Never create expectations from evaluator output or silently bless a changed rule.
+export function prepareSampleFixtures(store,id) {
+ const r=getNode(store,id);
+ if(store.db.prepare('SELECT 1 FROM fixtures WHERE node_id=?').get(id)) return;
+ const sample=JSON.parse(readFileSync(new URL('../samples/dose-guide/bundle.json',import.meta.url)));
+ if(r.document_sha256!==sample.document_sha256||!sample.fixtures[r.block_id]) return;
+ const original=store.db.prepare("SELECT after_hash FROM review_events WHERE node_id=? AND kind='draft-created' ORDER BY seq LIMIT 1").get(id);
+ if(original?.after_hash!==r.content_hash) return;
+ const entries=sample.fixtures[r.block_id];
+ fixtureGate(projectRules({document:{id:'fixture'},nodes:[r.node]}),entries);
+ saveFixtures(store,{node_id:id,entries});
+}
+export function runChecks(store,id) {
+ const r=getNode(store,id);
+ let details={content_hash:r.content_hash};
+ try {
+  prepareSampleFixtures(store,id);
+  const f=getFixtures(store,id),rules=projectRules({document:{id:'fixture'},nodes:[r.node]});
+  details={...details,authored:f.entries,generated:f.generated};
+  if(f.stale||!f.entries.length) return {status:'needs_attention',message:f.stale?'This rule has changed. The rule author or technical team needs to review its automated checks.':'Automated checks have not been supplied. The rule author or technical team needs to add them before release.',details};
+  const entries=f.entries.map(x=>({...x,expect:x.expect.filter(e=>(typeof e==='string'?e:e.node_id)===id)}));
+  fixtureGate(rules,entries);fixtureGate(rules,[...entries,...f.generated]);
+  return {status:'passed',message:'Automated examples and boundary checks passed. Review the guideline interpretation and use the EMR demo to explore patient examples.',details};
+ } catch(e) {return {status:'needs_attention',message:'An automated check could not pass. The rule author or technical team needs to investigate before release.',details:{...details,error:e.message}};}
 }
 // Independent interval/equality oracle for generated boundary expectations, not clinical content generation.
 function expectedIds(nodes,ctx) {
@@ -61,6 +85,7 @@ export function generateBoundaries(nodes) {
 export function releaseFixtures(store,sha) {
  const nodes=listDrafts(store,sha).nodes.map(x=>x.node),errors=[],entries=[];
  for(const n of nodes) {
+  prepareSampleFixtures(store,n.id);
   const f=getFixtures(store,n.id);
   if(f.stale||!f.entries.length) {errors.push(`${n.id}: missing or stale authored fixtures`);continue;}
   try {

@@ -13,3 +13,5 @@ Documentation checks cover README length/order, links, API/router parity, retire
 The demo exercises the generic assess endpoint for dosing and adult triage, including incomplete, scored, overridden and replayed states. It retains signed releases and event history. No real clinical accuracy, patient outcome, production security, facility sync or programme integration has been validated.
 
 Browser access was unavailable during this refactor; automated DOM and HTTP checks are the UI evidence. Historical manual evidence remains in the [archived validation](refactor/history/VALIDATION.md) and [prototype audit](refactor/history/PROTOTYPE-VALIDATION.md).
+
+The clinician-review follow-up passed 282 tests with no failures or skips. Added checks verify automatic sample test attachment, release without manual fixture actions, stale-case blocking after edits, engineering ownership for missing cases, unchanged failing expectations, and read-only collapsed review details.

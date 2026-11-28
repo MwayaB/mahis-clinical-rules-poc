@@ -22,7 +22,7 @@ call('/api/rules/import',{document_sha256:sample.document_sha256,block_id:sample
 draft=call('/api/ir?document='+sample.document_sha256);
 for(const entry of draft.nodes) {
  for(const reviewer of ['placeholder-reviewer-a','placeholder-reviewer-b']) call(`/api/ir/${entry.node.id}/approve`,{reviewer});
- call('/api/fixtures',{node_id:entry.node.id,entries:sample.fixtures[entry.block.id]});
+ assert.equal(call(`/api/ir/${entry.node.id}/checks`,{}).status,'passed');
 }
 const version=sample.release_version,existing=call('/api/releases').find(r=>r.version===version);
 if(existing) {assert.equal(existing.document_sha256,sample.document_sha256);console.log('Keeping existing append-only sample release '+version);} else call('/api/releases',{document_sha256:sample.document_sha256,version});

@@ -22,6 +22,7 @@ All routes are loopback-only and same-origin. JSON mutations require `Content-Ty
 | POST | `/api/ir/:id/approve` | {reviewer}; approval bound to current hash |
 | POST | `/api/ir/:id/reject` | {reviewer,reason} |
 | GET | `/api/ir/:id/history` | Revision and decision ledger |
+| POST | `/api/ir/:id/checks` | {}; run automated checks and attach pre-authored checks for unchanged shipped sample drafts |
 | GET | `/api/fixtures` | node query parameter |
 | POST | `/api/fixtures` | {node_id,entries}; attach to current content hash |
 | GET | `/api/releases` | List immutable releases |
@@ -55,6 +56,8 @@ The assess response is `{results,events}`. One `assessment-recorded` event is ap
 The deprecated prescription wrapper uses the same shared assessment/recording flow for patient-scoped dosing nodes, translates results into its historical `{advice,...}` response and retains prescription/receipt events. New clients should use encounters and assess. Historical result compatibility is documented in the [refactor report](refactor/REPORT.md).
 
 ## Fixtures and review
+
+The clinical review UI shows a read-only automated-check summary and optional technical details. Clinicians do not load, save or author test cases. The following fixture API remains available to rule authors and engineers.
 
 Fixture entries require `name`, `ctx`, `expect` and explicit `kinds`; optional `scope` and `node_id` target evidence. Release requires fresh authored fixtures with all type-required kinds. Approval evidence is read from review_events against current content, not IR status/reviewers. Generic rule import creates drafts only.
 

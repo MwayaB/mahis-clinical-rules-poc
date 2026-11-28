@@ -166,3 +166,9 @@ New suites are under test/shared and test/docs; test/compile-approved.js is a te
 New production modules: approval.js, schema.js, domains.js, inputs.js, assessment.js, assessment-records.js, upcast.js, types/registry.js, types/dosing.js and types/triage.js. Each owns one shared concern or one type's behavior. public/assessment.js owns result presentation; public/review-controls.js owns reusable review evidence/fixtures. Input defaults and guard values live under samples, not src.
 
 The documentation index links design, API, CLI, decisions, triage, validation, terminology, data quality, audit and refactor reports. The API reference is checked against the operative router allowlist in both directions; the deprecated prescription route stays listed. npm run demo is the sole public quickstart demo command. Documentation tests also enforce length/order, resolved links, notices, retired names and script existence.
+
+## Follow-up: clinician review responsibilities
+
+Clinical review no longer exposes fixture editors, JSON test inputs, or load/save actions. Cards show read-only automated-check summaries and collapsed technical details. The pre-authored checks for unchanged checksum-matched shipped sample drafts are attached automatically. Edits preserve stale-check blocking; other authored rules still need engineering-supplied tests. The fixture API and independent release gates remain. The EMR is the clinical example walkthrough; automated regression tests remain a technical responsibility. This supersedes the expanded fixture controls described above.
+
+Follow-up validation: 282 tests passed, zero failed/skipped. The demo flow now runs check summaries rather than posting fixtures. Existing applicability-review assertions were updated to require automated checks instead of the removed fixture JSON editor; clinical approval assertions were retained.
