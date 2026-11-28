@@ -47,7 +47,11 @@ export function initAssessment({refreshPatient}) {
   result.replaceChildren(current.length?renderResults(current.map(c=>c.result)):el('p',{},'Not assessed for the current observations.'));
   const completed=current.filter(c=>c.result.outcome);$('assessment-override').hidden=!completed.length;
   $('override-assessment').replaceChildren(...completed.map(c=>el('option',{value:String(c.event.seq)},c.result.node_id)));actionChoices();
-  const categories=completed.filter(c=>c.result.payload.renderer==='category');for(const c of categories) header.append(categoryBadge(c.result.outcome.category));
+  const categories=completed.filter(c=>c.result.payload.renderer==='category');
+  if(current.length) {
+   const labels={ok:'recorded',advice:'advice available',incomplete:'incomplete',invalid:'invalid'};
+   header.replaceChildren(...(categories.length?categories.map(c=>categoryBadge(c.result.outcome.category)):[el('span',{class:'badge'},'Assessment: '+[...new Set(current.map(c=>labels[c.result.status]))].join(', '))]));
+  }
   for(const override of state.overrides??[]) result.append(el('p',{},`Override of #${override.payload.assessment_seq}: ${override.payload.action} — ${override.payload.reason}`));
  }
  $('override-assessment').addEventListener('change',actionChoices);
