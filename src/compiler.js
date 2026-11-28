@@ -59,4 +59,3 @@ export function compile(ir,{dir,privateKey,fixtures,packageVersion='poc-0.1.0',t
  } catch(e) {rmSync(staging,{recursive:true,force:true});throw e;}
  return manifest;
 }
-
